@@ -1,0 +1,9 @@
+.root {
+    -fx-background-color: #000000;
+}
+
+#welcome-text {
+   -fx-font-size: 40px;
+   -fx-font-family: "Arial Black";
+   -fx-fill: #FFF;
+}
