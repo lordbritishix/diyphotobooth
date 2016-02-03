@@ -3,9 +3,8 @@ package com.diyphotobooth.lordbritishix.controller;
 import com.diyphotobooth.lordbritishix.scene.CameraScene;
 import com.diyphotobooth.lordbritishix.utils.StageManager;
 import com.google.inject.Inject;
-
 import javafx.scene.Node;
-import javafx.scene.input.KeyEvent;
+import javafx.scene.input.MouseEvent;
 
 /**
  * Controls the Idle Scene Controller
@@ -17,8 +16,8 @@ public class IdleSceneController extends BaseController {
     }
 
     @Override
-    public void handle(Node node, KeyEvent e) {
+    public void handle(Node node, MouseEvent e) {
+        System.out.println("a");
         getStageManager().showScene(CameraScene.class);
     }
-
 }

@@ -9,6 +9,8 @@ import com.google.inject.Injector;
 import javafx.application.Application;
 import javafx.stage.Stage;
 
+import java.nio.file.Paths;
+
 //Application entry point
 public class App extends Application {
     private StageManager stageManager;
@@ -19,7 +21,9 @@ public class App extends Application {
 
     @Override
     public void start(Stage primaryStage) throws Exception {
-        Injector injector = Guice.createInjector(new GuiceModule(primaryStage));
+        Injector injector = Guice.createInjector(
+                new GuiceModule(primaryStage,
+                        Paths.get("/home/lordbritishix/src/diyphotobooth/settings/dashboard.properties")));
 
         stageManager = injector.getInstance(StageManager.class);
         primaryStage.setTitle("Jim's DIY Photo Booth");

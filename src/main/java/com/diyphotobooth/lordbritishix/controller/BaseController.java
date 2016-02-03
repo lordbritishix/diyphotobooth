@@ -6,6 +6,7 @@ import com.diyphotobooth.lordbritishix.utils.StageManager;
 import javafx.event.ActionEvent;
 import javafx.scene.Node;
 import javafx.scene.input.KeyEvent;
+import javafx.scene.input.MouseEvent;
 
 /**
  * Base class for setting up controllers
@@ -41,6 +42,10 @@ public abstract class BaseController {
     }
 
     public void handle(Node node, KeyEvent e) {
+
+    }
+
+    public void handle(Node node, MouseEvent e) {
 
     }
 
