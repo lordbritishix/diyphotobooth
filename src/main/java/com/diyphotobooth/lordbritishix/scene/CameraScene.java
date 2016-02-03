@@ -1,4 +1,4 @@
-package com.diyphotobooth.lordbritishix.ui;
+package com.diyphotobooth.lordbritishix.scene;
 
 import com.diyphotobooth.lordbritishix.controller.CameraSceneController;
 import com.google.inject.Inject;
@@ -9,7 +9,7 @@ import javafx.scene.layout.StackPane;
 /**
  * Camera Scene is responsible for:
  * 1. Displaying the view finder
- * 2.
+ * 2. Walking the user through the capture image process
  */
 public class CameraScene extends BaseScene {
     @Inject

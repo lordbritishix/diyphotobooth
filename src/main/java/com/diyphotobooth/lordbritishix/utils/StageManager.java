@@ -1,6 +1,6 @@
 package com.diyphotobooth.lordbritishix.utils;
 
-import com.diyphotobooth.lordbritishix.ui.BaseScene;
+import com.diyphotobooth.lordbritishix.scene.BaseScene;
 import com.google.inject.Inject;
 import com.google.inject.Injector;
 import com.google.inject.Singleton;
@@ -21,7 +21,6 @@ public class StageManager {
         this.injector = injector;
     }
 
-    @SuppressWarnings("InterfaceIsType")
     public void showScene(Class<? extends BaseScene> scene) {
         currentStage.setScene(injector.getInstance(scene));
 

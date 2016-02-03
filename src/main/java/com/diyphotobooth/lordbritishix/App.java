@@ -1,7 +1,7 @@
 package com.diyphotobooth.lordbritishix;
 
 import com.diyphotobooth.lordbritishix.guice.GuiceModule;
-import com.diyphotobooth.lordbritishix.ui.IdleScene;
+import com.diyphotobooth.lordbritishix.scene.IdleScene;
 import com.diyphotobooth.lordbritishix.utils.StageManager;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
@@ -9,6 +9,7 @@ import com.google.inject.Injector;
 import javafx.application.Application;
 import javafx.stage.Stage;
 
+//Application entry point
 public class App extends Application {
     private StageManager stageManager;
 

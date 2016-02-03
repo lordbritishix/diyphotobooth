@@ -1,4 +1,4 @@
-package com.diyphotobooth.lordbritishix.ui;
+package com.diyphotobooth.lordbritishix.scene;
 
 import com.diyphotobooth.lordbritishix.controller.BaseController;
 import com.diyphotobooth.lordbritishix.utils.Constants;
@@ -20,7 +20,6 @@ public abstract class BaseScene extends Scene {
         this.controller.setScene(this);
 
         getStylesheets().add(BaseScene.class.getResource("/css/Style.css").toExternalForm());
-
     }
 
     public Pane getRootPane() {

@@ -1,6 +1,6 @@
 package com.diyphotobooth.lordbritishix.controller;
 
-import com.diyphotobooth.lordbritishix.ui.CameraScene;
+import com.diyphotobooth.lordbritishix.scene.CameraScene;
 import com.diyphotobooth.lordbritishix.utils.StageManager;
 import com.google.inject.Inject;
 

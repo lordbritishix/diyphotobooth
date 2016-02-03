@@ -1,6 +1,6 @@
 package com.diyphotobooth.lordbritishix.controller;
 
-import com.diyphotobooth.lordbritishix.ui.BaseScene;
+import com.diyphotobooth.lordbritishix.scene.BaseScene;
 import com.diyphotobooth.lordbritishix.utils.StageManager;
 
 import javafx.event.ActionEvent;
