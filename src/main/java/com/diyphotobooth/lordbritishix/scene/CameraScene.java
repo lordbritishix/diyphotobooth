@@ -1,19 +1,18 @@
 package com.diyphotobooth.lordbritishix.scene;
 
+import java.io.ByteArrayInputStream;
+import java.util.ArrayDeque;
 import com.diyphotobooth.lordbritishix.client.IpCameraException;
 import com.diyphotobooth.lordbritishix.client.IpCameraHttpClient;
-import com.diyphotobooth.lordbritishix.client.JpegStreamReader;
+import com.diyphotobooth.lordbritishix.client.MJpegStreamIterator;
 import com.diyphotobooth.lordbritishix.controller.CameraSceneController;
 import com.google.common.collect.Queues;
 import com.google.inject.Inject;
+
 import javafx.application.Platform;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
 import javafx.scene.layout.StackPane;
-
-import java.io.ByteArrayInputStream;
-import java.io.IOException;
-import java.util.ArrayDeque;
 
 /**
  * Camera Scene is responsible for:
@@ -25,7 +24,7 @@ public class CameraScene extends BaseScene {
 
     private final IpCameraHttpClient client;
     private final ImageView imageView;
-    private final JpegStreamReader jis;
+    private final MJpegStreamIterator jis;
 
     private final ArrayDeque<byte[]> deque;
 
@@ -38,20 +37,15 @@ public class CameraScene extends BaseScene {
         deque = Queues.newArrayDeque();
 
         try {
-            jis = new JpegStreamReader(this.client.getStream());
+            jis = new MJpegStreamIterator(this.client.getStream());
         } catch (IpCameraException e) {
             throw new RuntimeException(e);
         }
 
         Thread t = new Thread(() -> {
-            while (true) {
-                try {
-                    byte[] b = jis.nextFrame();
-                    enqueue(b);
-                } catch (IOException e) {
-                    e.printStackTrace();
-                }
-
+            while (jis.hasNext()) {
+                byte[] b = jis.next();
+                enqueue(b);
             }
         });
         t.start();
