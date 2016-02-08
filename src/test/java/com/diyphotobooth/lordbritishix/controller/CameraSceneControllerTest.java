@@ -3,7 +3,6 @@ package com.diyphotobooth.lordbritishix.controller;
 import com.diyphotobooth.lordbritishix.client.IpCameraException;
 import com.diyphotobooth.lordbritishix.client.IpCameraHttpClient;
 import com.diyphotobooth.lordbritishix.client.MJpegStreamBufferer;
-import com.diyphotobooth.lordbritishix.model.Session;
 import com.diyphotobooth.lordbritishix.model.SessionManager;
 import com.diyphotobooth.lordbritishix.model.Template;
 import com.diyphotobooth.lordbritishix.utils.StageManager;
@@ -15,19 +14,14 @@ import org.mockito.runners.MockitoJUnitRunner;
 
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
-import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.MatcherAssert.assertThat;
-import static org.junit.Assert.*;
-import static org.mockito.Matchers.any;
-import static org.mockito.Matchers.anyBoolean;
-import static org.mockito.Matchers.anyInt;
-import static org.mockito.Mockito.mock;
+import static org.junit.Assert.assertNull;
+import static org.junit.Assert.assertTrue;
 import static org.mockito.Mockito.when;
 
 @RunWith(MockitoJUnitRunner.class)
@@ -132,41 +126,4 @@ public class CameraSceneControllerTest {
         assertThat(dataCount.get(), is(0));
         assertThat(startedCount.get(), is(1));
     }
-
-    @Test
-    public void startSessionCompletesSessionOnHappyCase() throws InterruptedException, IOException {
-        int count = 10;
-        AtomicInteger counter = new AtomicInteger();
-        CountDownLatch latch = new CountDownLatch(count);
-        when(sessionManager.getOrCreateNewSession(anyInt(), anyBoolean(), any(Template.class))).thenReturn(new Session(count, null));
-
-        fixture.startSession(count, 0, 0, p -> {
-            assertTrue(p != null);
-            counter.incrementAndGet();
-            assertThat(p.getPhotoCountTaken(), is(counter.get()));
-            latch.countDown();
-        });
-
-        assertTrue(latch.await(15, TimeUnit.SECONDS));
-        assertThat(counter.get(), is(count));
-    }
-
-    @Test
-    public void startSessionCompletesSessionOnZeroPhotos() throws InterruptedException, IOException {
-        int count = 0;
-        AtomicInteger counter = new AtomicInteger();
-        CountDownLatch latch = new CountDownLatch(1);
-        when(sessionManager.getOrCreateNewSession(anyInt(), anyBoolean(), any(Template.class))).thenReturn(new Session(count, null));
-
-        fixture.startSession(count, 0, 0, p -> {
-            counter.incrementAndGet();
-        }).whenComplete((p, q) -> {
-            latch.countDown();
-        });
-
-        assertTrue(latch.await(15, TimeUnit.SECONDS));
-        assertThat(counter.get(), is(count));
-    }
-
-
 }

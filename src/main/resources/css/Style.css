@@ -7,3 +7,17 @@
    -fx-font-family: "Arial Black";
    -fx-fill: #FFF;
 }
+
+#counter {
+   -fx-font-size: 35px;
+   -fx-font-family: "Arial Black";
+   -fx-fill: #FFF;
+   -font-weight: bold;
+}
+
+#countdown {
+   -fx-font-size: 130px;
+   -fx-font-family: "Arial Black";
+   -fx-fill: rgba(255,255,0,0.5);
+   -font-weight: bold;
+}

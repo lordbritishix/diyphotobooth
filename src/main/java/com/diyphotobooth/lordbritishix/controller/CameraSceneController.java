@@ -17,6 +17,7 @@ import com.google.inject.name.Named;
 import javafx.application.Platform;
 import javafx.scene.Node;
 import javafx.scene.input.MouseEvent;
+import javafx.scene.media.AudioClip;
 import lombok.Data;
 import lombok.extern.slf4j.Slf4j;
 
@@ -25,10 +26,12 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.function.Consumer;
 
@@ -37,6 +40,10 @@ import java.util.function.Consumer;
  */
 @Slf4j
 public class CameraSceneController extends BaseController implements MJpegStreamBufferListener {
+    private static final AudioClip SUCCESS = new AudioClip(CameraSceneController.class.getResource("/sound/success.wav").toString());
+    private static final AudioClip REFRESH = new AudioClip(CameraSceneController.class.getResource("/sound/refresh.wav").toString());
+    private static final AudioClip ERROR = new AudioClip(CameraSceneController.class.getResource("/sound/error.wav").toString());
+
     /**
      * State machine
      *
@@ -178,7 +185,12 @@ public class CameraSceneController extends BaseController implements MJpegStream
             viewFinderStopper.get().stopAndAwait(waitForCompletion);
         }
 
-        Platform.runLater(() -> ((CameraScene) getScene()).showRetry());
+        state = State.STOPPED;
+
+        Platform.runLater(() -> {
+            REFRESH.play();
+            ((CameraScene) getScene()).showRetry();
+        });
     }
 
     private void sessionStartToSessionEnd(boolean isFailure) throws ExecutionException, InterruptedException {
@@ -190,14 +202,18 @@ public class CameraSceneController extends BaseController implements MJpegStream
         ScheduledExecutorService service = Executors.newScheduledThreadPool(1);
 
         Platform.runLater(() -> {
+            ((CameraScene) getScene()).clearCounterValue();
+
             if (isFailure) {
                 ((CameraScene) getScene()).showWrong();
+                ERROR.play();
                 service.schedule(() -> Platform.runLater(() ->
                         getStageManager().showScene(IdleScene.class)), 5, TimeUnit.SECONDS);
 
             }
             else {
                 ((CameraScene) getScene()).showCheckmark();
+                SUCCESS.play();
                 service.schedule(() -> Platform.runLater(() ->
                     getStageManager().showScene(IdleScene.class)), 5, TimeUnit.SECONDS);
             }
@@ -213,14 +229,23 @@ public class CameraSceneController extends BaseController implements MJpegStream
             return CompletableFuture.completedFuture(null);
         }
 
+        Platform.runLater(() -> {
+            ((CameraScene) getScene()).setCountdownText("Ready?");
+            ((CameraScene) getScene()).setCounterValue(1, template.getPhotoCount());
+        });
+
         state = State.SESSION_START;
         return startSession(
                 template.getPhotoCount(),
                 countdownLengthInSeconds,
-                countdownLengthInSeconds,
+                1,
                 (session) -> {
                     try(InputStream is = client.takePhoto(false)) {
                         sessionManager.writeImageToSession(session, is);
+                        if (!session.isSessionFinished()) {
+                            Platform.runLater(() -> ((CameraScene) getScene()).setCounterValue(
+                                    session.getPhotoCountTaken() + 1, template.getPhotoCount()));
+                        }
                     } catch (IpCameraException | IOException e) {
                         throw new RuntimeException(e);
                     }
@@ -256,21 +281,42 @@ public class CameraSceneController extends BaseController implements MJpegStream
     CompletableFuture<Session> startSession(int photoCount, int delayPerStepInSeconds,
                                                     int startDelayInSeconds, Consumer<Session> sessionStepAction) {
         return CompletableFuture.supplyAsync(() -> {
-            Session session = null;
+            Session session;
             try {
                 session = sessionManager.getOrCreateNewSession(photoCount, true, template);
                 log.info("Session started: {}", session.getSessionId());
-                sleepQuietly(startDelayInSeconds);
             } catch (Exception e) {
                 throw new RuntimeException("Unable to start the session", e);
             }
 
-
             while (!session.isSessionFinished()) {
-                log.info("Doing session: {} for id {}", session.getPhotoCountTaken(), session.getSessionId());
-                session.nextPhoto();
-                sessionStepAction.accept(session);
-                sleepQuietly(delayPerStepInSeconds);
+                CountDownLatch latch = new CountDownLatch(1);
+                AtomicBoolean hasErrors = new AtomicBoolean();
+
+                Platform.runLater(() -> ((CameraScene)getScene()).setCountdownValueAndStart(
+                    delayPerStepInSeconds, startDelayInSeconds, q -> {
+                        try {
+                            log.info("Doing session: {} for id {}", session.getPhotoCountTaken(), session.getSessionId());
+                            session.nextPhoto();
+                            sessionStepAction.accept(session);
+                            latch.countDown();
+                        }
+                        catch(Exception e) {
+                            hasErrors.set(true);
+                            session.forceCompleteSession();
+                            latch.countDown();
+                        }
+                }));
+
+                try {
+                    latch.await();
+                } catch (InterruptedException e) {
+                    //swallow
+                }
+
+                if (hasErrors.get()) {
+                    throw new RuntimeException("Session was forced to complete - Something wrong has occured");
+                }
             }
 
             return session;

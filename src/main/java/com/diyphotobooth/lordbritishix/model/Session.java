@@ -59,6 +59,10 @@ public class Session {
         forceComplete = true;
     }
 
+    public boolean isSessionCompletedByForce() {
+        return forceComplete;
+    }
+
     public void setIsPrinted(boolean isPrinted) {
         this.isPrinted = isPrinted;
     }

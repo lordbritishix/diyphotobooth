@@ -3,6 +3,8 @@ package com.diyphotobooth.lordbritishix.scene;
 import com.diyphotobooth.lordbritishix.controller.CameraSceneController;
 import com.diyphotobooth.lordbritishix.utils.StageManager;
 import com.google.inject.Inject;
+import javafx.geometry.Insets;
+import javafx.geometry.Pos;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
 import javafx.scene.layout.StackPane;
@@ -10,6 +12,7 @@ import lombok.extern.slf4j.Slf4j;
 
 import java.io.IOException;
 import java.io.InputStream;
+import java.util.function.Consumer;
 
 /**
  * Camera Scene is responsible for:
@@ -20,17 +23,46 @@ import java.io.InputStream;
 public class CameraScene extends BaseScene {
     private final ImageView imageView;
     private final StageManager stageManager;
+    private final Counter counter;
+    private final Countdown countdown;
 
     @Inject
     public CameraScene(CameraSceneController controller, StageManager stageManager) {
         super(new StackPane(), controller);
         this.stageManager = stageManager;
 
-        imageView = new ImageView();
-        imageView.setPreserveRatio(true);
-        getRootPane().getChildren().add(imageView);
+        this.imageView = new ImageView();
+        this.imageView.setPreserveRatio(true);
 
-        this.setOnMouseClicked(p -> controller.handle(null, p));
+        this.countdown = new Countdown();
+
+        counter = new Counter(0, 0);
+
+        getRootPane().getChildren().add(0, imageView);
+        getRootPane().getChildren().add(1, counter);
+        getRootPane().getChildren().add(1, countdown);
+
+        getRootPane().setOnMouseClicked(p -> getController().handle(null, p));
+
+        StackPane.setAlignment(counter, Pos.BOTTOM_RIGHT);
+        StackPane.setMargin(counter, new Insets(20));
+    }
+
+    public void setCountdownValueAndStart(int countdownFrom, int startDelay, Consumer<Void> countdownCompleteCallback) {
+        countdown.setCountdownFrom(countdownFrom, startDelay, countdownCompleteCallback);
+        countdown.start();
+    }
+
+    public void setCounterValue(int currentValue, int finalValue) {
+        counter.setCounterValue(currentValue, finalValue);
+    }
+
+    public void setCountdownText(String text) {
+        countdown.showText(text);
+    }
+
+    public void clearCounterValue() {
+        counter.clear();
     }
 
     public void setCameraImage(InputStream is) {
