@@ -1,31 +1,26 @@
 package com.diyphotobooth.lordbritishix.client;
 
+import com.google.common.collect.Queues;
+
 import java.util.Deque;
 import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReadWriteLock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
-import com.google.common.collect.Queues;
 
 /**
  * Buffers MJpeg streams. If the buffered streams have reached capacity, the incoming stream is discarded.
  * Once stopped, the buffer cannot be restarted.
  */
 public class MJpegStreamBufferer {
-    private final MJpegStreamIterator iterator;
     private final Deque<byte[]> buffer;
-    private final ExecutorService executorService;
     private final ReadWriteLock lock;
-    private CompletableFuture future;
     private final int bufferSize;
+    private volatile boolean started = false;
     private volatile boolean stopped = false;
 
-    public MJpegStreamBufferer(MJpegStreamIterator iterator, int bufferSize) {
-        this.iterator = iterator;
-        this.executorService = Executors.newSingleThreadExecutor();
-        this.lock = new ReentrantReadWriteLock();
+    public MJpegStreamBufferer(int bufferSize) {
+        this.lock = new ReentrantReadWriteLock(true);
         this.bufferSize = bufferSize;
         this.buffer = Queues.newArrayDeque();
     }
@@ -34,26 +29,25 @@ public class MJpegStreamBufferer {
      * Starts reading the stream on a separate thread and places it in a buffer. If the buffer is full,
      * the incoming streams are discarded.
      *
-     * If we are at the end of the stream or if the stop method has been called, the read stops.
+     * If we are at the end of the stream or if the stopAndAwait method has been called, the read stops.
      */
-    public boolean start(MJpegStreamBufferListener listener) {
-        if (future != null || stopped) {
+    public boolean start(MJpegStreamBufferListener listener, MJpegStreamIterator iterator) {
+        if (started) {
             return false;
         }
 
-        future = CompletableFuture.runAsync(() -> {
-            while(iterator.hasNext() && !stopped) {
-                if (executorService.isShutdown()) {
-                    break;
-                }
-
+        CompletableFuture.runAsync(() -> {
+            while(!stopped) {
                 Lock writeLock = lock.writeLock();
                 try {
                     writeLock.lock();
                     if (buffer.size() < bufferSize) {
                         byte[] data = iterator.next();
-                        buffer.add(data);
-                        listener.streamBuffered(data);
+
+                        if (data != null) {
+                            buffer.add(data);
+                            listener.streamBuffered(data);
+                        }
                     }
                     else {
                         listener.streamDiscarded(iterator.next());
@@ -70,6 +64,8 @@ public class MJpegStreamBufferer {
             stopped = true;
             listener.stopped();
         });
+
+        started = true;
 
         return true;
     }
@@ -102,7 +98,12 @@ public class MJpegStreamBufferer {
         Lock readLock = lock.readLock();
         try {
             readLock.lock();
-            return buffer.pollFirst();
+
+            if (!buffer.isEmpty()) {
+                return buffer.pop();
+            }
+
+            return null;
         }
         finally {
             readLock.unlock();

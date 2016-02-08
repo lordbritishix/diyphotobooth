@@ -17,7 +17,11 @@ public class IdleSceneController extends BaseController {
 
     @Override
     public void handle(Node node, MouseEvent e) {
-        System.out.println("a");
         getStageManager().showScene(CameraScene.class);
+    }
+
+    @Override
+    public void shutdown() {
+
     }
 }

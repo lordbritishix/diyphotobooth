@@ -8,6 +8,8 @@ import javafx.scene.Node;
 import javafx.scene.input.KeyEvent;
 import javafx.scene.input.MouseEvent;
 
+import java.util.concurrent.ExecutionException;
+
 /**
  * Base class for setting up controllers
  */
@@ -49,5 +51,10 @@ public abstract class BaseController {
 
     }
 
+    public void sceneLoaded() {
+
+    }
+
+    public abstract void shutdown() throws ExecutionException, InterruptedException, Exception;
 }
 

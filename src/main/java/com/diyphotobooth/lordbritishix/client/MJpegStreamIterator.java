@@ -1,12 +1,15 @@
 package com.diyphotobooth.lordbritishix.client;
 
+import com.google.common.annotations.VisibleForTesting;
+import com.google.common.collect.PeekingIterator;
+import lombok.Data;
+
 import java.io.BufferedInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
 import java.util.Iterator;
-import com.google.common.annotations.VisibleForTesting;
 
 /**
  * Reads the mjpeg stream payloads using an iterator interface. The format of an mjpeg stream is:
@@ -17,6 +20,7 @@ import com.google.common.annotations.VisibleForTesting;
  * ...
  */
 public class MJpegStreamIterator implements Iterator<byte[]> {
+    private PeekingIterator<byte[]> iterator;
     private InputStream stream;
     private final MJpegStreamHeader header;
 
@@ -27,6 +31,7 @@ public class MJpegStreamIterator implements Iterator<byte[]> {
         stream = new BufferedInputStream(is);
     }
 
+    @Data
     private class MJpegStreamHeader {
         private int contentLength;
         private String boundary;
@@ -85,7 +90,10 @@ public class MJpegStreamIterator implements Iterator<byte[]> {
     @Override
     public boolean hasNext() {
         try {
-            return stream.available() != 0;
+            stream.mark(1);
+            int read = stream.read();
+            stream.reset();
+            return read != -1;
         } catch (IOException e) {
             return false;
         }

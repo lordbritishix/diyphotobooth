@@ -18,7 +18,7 @@ public class MJpegStreamBuffererTest {
         CountDownLatch latch = new CountDownLatch(1);
         Pair<InputStream, List<byte[]>> stream = TestUtils.generateStream(100);
 
-        MJpegStreamBufferer buffer = new MJpegStreamBufferer(new MJpegStreamIterator(stream.getLeft()), 5);
+        MJpegStreamBufferer buffer = new MJpegStreamBufferer(5);
 
         buffer.start(new MJpegStreamBufferListener() {
             @Override
@@ -34,7 +34,7 @@ public class MJpegStreamBuffererTest {
             @Override
             public void streamDiscarded(byte[] stream) {
             }
-        });
+        }, new MJpegStreamIterator(stream.getLeft()));
 
         latch.await();
 
@@ -50,7 +50,7 @@ public class MJpegStreamBuffererTest {
         CountDownLatch latch = new CountDownLatch(1);
         Pair<InputStream, List<byte[]>> stream = TestUtils.generateStream(100);
 
-        MJpegStreamBufferer buffer = new MJpegStreamBufferer(new MJpegStreamIterator(stream.getLeft()), 5);
+        MJpegStreamBufferer buffer = new MJpegStreamBufferer(5);
 
         buffer.start(new MJpegStreamBufferListener() {
             @Override
@@ -70,12 +70,10 @@ public class MJpegStreamBuffererTest {
             @Override
             public void streamDiscarded(byte[] stream) {
             }
-        });
+        }, new MJpegStreamIterator(stream.getLeft()));
 
         buffer.stop();
         latch.await();
-
-        assertThat(buffer.start(null), is(false));
     }
 
     @Test
@@ -84,7 +82,7 @@ public class MJpegStreamBuffererTest {
 
         Pair<InputStream, List<byte[]>> stream = TestUtils.generateStream(100);
 
-        MJpegStreamBufferer buffer = new MJpegStreamBufferer(new MJpegStreamIterator(stream.getLeft()), 200);
+        MJpegStreamBufferer buffer = new MJpegStreamBufferer(200);
 
         buffer.start(new MJpegStreamBufferListener() {
             @Override
@@ -104,7 +102,7 @@ public class MJpegStreamBuffererTest {
             @Override
             public void streamDiscarded(byte[] stream) {
             }
-        });
+        }, new MJpegStreamIterator(stream.getLeft()));
 
         //Wait until first write
         List<byte[]> streams = Lists.newArrayList();
