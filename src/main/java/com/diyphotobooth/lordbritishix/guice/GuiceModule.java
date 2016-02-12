@@ -1,5 +1,12 @@
 package com.diyphotobooth.lordbritishix.guice;
 
+import com.diyphotobooth.lordbritishix.model.Template;
+import com.diyphotobooth.lordbritishix.utils.StageManager;
+import com.google.inject.AbstractModule;
+import com.google.inject.Provides;
+import com.google.inject.name.Names;
+import javafx.stage.Stage;
+
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
@@ -7,13 +14,6 @@ import java.io.InputStream;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.Properties;
-import com.diyphotobooth.lordbritishix.model.Template;
-import com.diyphotobooth.lordbritishix.utils.StageManager;
-import com.google.inject.AbstractModule;
-import com.google.inject.Provides;
-import com.google.inject.name.Names;
-
-import javafx.stage.Stage;
 
 /**
  * Sets up DI configuration
@@ -67,7 +67,6 @@ public class GuiceModule extends AbstractModule {
     @Provides
     Template templateProvider() throws IOException {
         Properties properties = loadFromFile(settingsFolder);
-        Paths.get(properties.getProperty("template.filename"));
         File templateFile = Paths.get(properties.getProperty("template.filename")).toFile();
         try (InputStream is = new FileInputStream(templateFile)) {
             return Template.fromJson(is);

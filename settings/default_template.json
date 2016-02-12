@@ -1,8 +1,6 @@
 {
-  "settings": {
-    "name": "Default Template",
-    "templateFile": "/home/lordbritishix/templates/default.jpeg",
-    "photoCount": "4"
-  }
+	"name": "Default Template",
+	"templateFile": "/home/lordbritishix/templates/default.jpeg",
+	"photoCount": 4
 }
 
