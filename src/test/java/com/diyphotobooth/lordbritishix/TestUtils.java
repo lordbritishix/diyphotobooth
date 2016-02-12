@@ -1,4 +1,4 @@
-package com.diyphotobooth.lordbritishix.client;
+package com.diyphotobooth.lordbritishix;
 
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;

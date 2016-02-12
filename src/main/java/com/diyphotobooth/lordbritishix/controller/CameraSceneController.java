@@ -1,29 +1,10 @@
 package com.diyphotobooth.lordbritishix.controller;
 
-import com.diyphotobooth.lordbritishix.client.IpCameraException;
-import com.diyphotobooth.lordbritishix.client.IpCameraHttpClient;
-import com.diyphotobooth.lordbritishix.client.MJpegStreamBufferListener;
-import com.diyphotobooth.lordbritishix.client.MJpegStreamBufferer;
-import com.diyphotobooth.lordbritishix.client.MJpegStreamIterator;
-import com.diyphotobooth.lordbritishix.model.Session;
-import com.diyphotobooth.lordbritishix.model.SessionManager;
-import com.diyphotobooth.lordbritishix.model.Template;
-import com.diyphotobooth.lordbritishix.scene.CameraScene;
-import com.diyphotobooth.lordbritishix.scene.IdleScene;
-import com.diyphotobooth.lordbritishix.utils.StageManager;
-import com.google.common.annotations.VisibleForTesting;
-import com.google.inject.Inject;
-import com.google.inject.name.Named;
-import javafx.application.Platform;
-import javafx.scene.Node;
-import javafx.scene.input.MouseEvent;
-import javafx.scene.media.AudioClip;
-import lombok.Data;
-import lombok.extern.slf4j.Slf4j;
-
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CountDownLatch;
@@ -34,6 +15,28 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.function.Consumer;
+import java.util.function.Function;
+import com.diyphotobooth.lordbritishix.client.IpCameraException;
+import com.diyphotobooth.lordbritishix.client.IpCameraHttpClient;
+import com.diyphotobooth.lordbritishix.client.MJpegStreamBufferListener;
+import com.diyphotobooth.lordbritishix.client.MJpegStreamBufferer;
+import com.diyphotobooth.lordbritishix.client.MJpegStreamIterator;
+import com.diyphotobooth.lordbritishix.model.Session;
+import com.diyphotobooth.lordbritishix.model.SessionUtils;
+import com.diyphotobooth.lordbritishix.model.Template;
+import com.diyphotobooth.lordbritishix.scene.CameraScene;
+import com.diyphotobooth.lordbritishix.scene.IdleScene;
+import com.diyphotobooth.lordbritishix.utils.StageManager;
+import com.google.common.annotations.VisibleForTesting;
+import com.google.inject.Inject;
+import com.google.inject.name.Named;
+
+import javafx.application.Platform;
+import javafx.scene.Node;
+import javafx.scene.input.MouseEvent;
+import javafx.scene.media.AudioClip;
+import lombok.Data;
+import lombok.extern.slf4j.Slf4j;
 
 /**
  * Controls the Camera Scene
@@ -66,7 +69,8 @@ public class CameraSceneController extends BaseController implements MJpegStream
     private volatile State state;
     private volatile Optional<ViewFinderStopper> viewFinderStopper;
     private final AtomicLong discardedCount = new AtomicLong();
-    private final SessionManager sessionManager;
+    private final Path snapshotFolder;
+    private final SessionUtils sessionUtils;
 
     @Inject
     public CameraSceneController(StageManager stageManager,
@@ -74,15 +78,17 @@ public class CameraSceneController extends BaseController implements MJpegStream
                                  @Named("buffer.size") int bufferSize,
                                  @Named("countdown.length.sec") int countdownLengthInSeconds,
                                  Template template,
-                                 SessionManager sessionManager) {
+                                 @Named("snapshot.folder") String snapshotFolder,
+                                 SessionUtils sessionUtils) {
         super(stageManager);
         this.client = client;
         this.state = State.STOPPED;
         this.bufferSize = bufferSize;
         this.countdownLengthInSeconds = countdownLengthInSeconds;
         this.template = template;
-        this.sessionManager = sessionManager;
         this.viewFinderStopper = Optional.empty();
+        this.snapshotFolder = Paths.get(snapshotFolder);
+        this.sessionUtils = sessionUtils;
     }
 
     @Override
@@ -199,6 +205,9 @@ public class CameraSceneController extends BaseController implements MJpegStream
         if (viewFinderStopper.isPresent()) {
             viewFinderStopper.get().stopAndAwait(true);
         }
+
+        state = State.SESSION_END;
+
         ScheduledExecutorService service = Executors.newScheduledThreadPool(1);
 
         Platform.runLater(() -> {
@@ -240,15 +249,18 @@ public class CameraSceneController extends BaseController implements MJpegStream
                 countdownLengthInSeconds,
                 1,
                 (session) -> {
+                    String imageName = "";
                     try(InputStream is = client.takePhoto(false)) {
-                        sessionManager.writeImageToSession(session, is);
+                        imageName = sessionUtils.writeImageToCurrentSession(session, is, snapshotFolder);
                         if (!session.isSessionFinished()) {
                             Platform.runLater(() -> ((CameraScene) getScene()).setCounterValue(
-                                    session.getPhotoCountTaken() + 1, template.getPhotoCount()));
+                                    session.getNumberOfPhotosAlreadyTaken() + 1, template.getPhotoCount()));
                         }
                     } catch (IpCameraException | IOException e) {
                         throw new RuntimeException(e);
                     }
+
+                    return imageName;
                 }
         );
     }
@@ -266,7 +278,6 @@ public class CameraSceneController extends BaseController implements MJpegStream
             viewFinderStopper.get().stopAndAwait(true);
         }
 
-        sessionManager.getCurrentSession().ifPresent(p -> p.forceCompleteSession());
         log.info("CameraSceneController shutdown complete");
     }
 
@@ -279,56 +290,54 @@ public class CameraSceneController extends BaseController implements MJpegStream
      */
     @VisibleForTesting
     CompletableFuture<Session> startSession(int photoCount, int delayPerStepInSeconds,
-                                                    int startDelayInSeconds, Consumer<Session> sessionStepAction) {
+                                                    int startDelayInSeconds, Function<Session, String> sessionStepAction) {
         return CompletableFuture.supplyAsync(() -> {
             Session session;
             try {
-                session = sessionManager.getOrCreateNewSession(photoCount, true, template);
-                log.info("Session started: {}", session.getSessionId());
+                session = sessionUtils.newSession(photoCount, template, snapshotFolder);
+                log.info("Session started: {}, {}", session.getSessionId(), session.getSessionDate().toString());
             } catch (Exception e) {
                 throw new RuntimeException("Unable to start the session", e);
             }
 
-            while (!session.isSessionFinished()) {
+            while (!session.isSessionFinished() && !viewFinderStopper.get().isStopped()) {
                 CountDownLatch latch = new CountDownLatch(1);
                 AtomicBoolean hasErrors = new AtomicBoolean();
 
-                Platform.runLater(() -> ((CameraScene)getScene()).setCountdownValueAndStart(
+                //Show countdown
+                Platform.runLater(() -> ((CameraScene) getScene()).setCountdownValueAndStart(
                     delayPerStepInSeconds, startDelayInSeconds, q -> {
                         try {
-                            log.info("Doing session: {} for id {}", session.getPhotoCountTaken(), session.getSessionId());
-                            session.nextPhoto();
-                            sessionStepAction.accept(session);
-                            latch.countDown();
+                            log.info("Doing session: {} for id {}", session.getNumberOfPhotosAlreadyTaken(), session.getSessionId());
+                            sessionUtils.next(session, sessionStepAction.apply(session));
                         }
                         catch(Exception e) {
                             hasErrors.set(true);
-                            session.forceCompleteSession();
+                        } finally {
                             latch.countDown();
                         }
                 }));
 
                 try {
+                    //Wait for the countdown to complete
                     latch.await();
                 } catch (InterruptedException e) {
                     //swallow
                 }
 
+                //If an error has occured, break the loop and update the session to error
                 if (hasErrors.get()) {
+                    sessionUtils.updateSessionStateAndPersistQuietly(snapshotFolder, session, Session.State.ERROR);
                     throw new RuntimeException("Session was forced to complete - Something wrong has occured");
                 }
             }
 
+            //If we have completed taking the session, set the state to done
+            session.setState(Session.State.DONE_TAKING_PHOTO);
+            sessionUtils.updateSessionStateAndPersistQuietly(snapshotFolder, session, Session.State.DONE_TAKING_PHOTO);
+
             return session;
         });
-    }
-
-    private void sleepQuietly(int seconds) {
-        try {
-            Thread.sleep(seconds * 1000L);
-        } catch (InterruptedException e) {
-            throw new RuntimeException(e);
-        }
     }
 
     /**

@@ -1,4 +1,4 @@
-package com.diyphotobooth.lordbritishix.model.serializer;
+package com.diyphotobooth.lordbritishix.model.converter;
 
 import com.diyphotobooth.lordbritishix.model.Template;
 import org.codehaus.jackson.JsonGenerator;

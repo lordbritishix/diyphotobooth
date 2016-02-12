@@ -5,6 +5,7 @@ import java.io.InputStream;
 import java.util.List;
 import org.apache.commons.lang3.tuple.Pair;
 import org.junit.Test;
+import com.diyphotobooth.lordbritishix.TestUtils;
 import com.google.common.collect.ImmutableList;
 
 import static org.hamcrest.MatcherAssert.assertThat;

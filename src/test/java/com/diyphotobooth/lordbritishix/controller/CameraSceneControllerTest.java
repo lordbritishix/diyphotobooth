@@ -1,27 +1,25 @@
 package com.diyphotobooth.lordbritishix.controller;
 
-import com.diyphotobooth.lordbritishix.client.IpCameraException;
-import com.diyphotobooth.lordbritishix.client.IpCameraHttpClient;
-import com.diyphotobooth.lordbritishix.client.MJpegStreamBufferer;
-import com.diyphotobooth.lordbritishix.model.SessionManager;
-import com.diyphotobooth.lordbritishix.model.Template;
-import com.diyphotobooth.lordbritishix.utils.StageManager;
-import org.junit.Before;
-import org.junit.Test;
-import org.junit.runner.RunWith;
-import org.mockito.Mock;
-import org.mockito.runners.MockitoJUnitRunner;
-
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
+import org.junit.Before;
+import org.junit.Test;
+import org.junit.runner.RunWith;
+import org.mockito.Mock;
+import org.mockito.runners.MockitoJUnitRunner;
+import com.diyphotobooth.lordbritishix.client.IpCameraException;
+import com.diyphotobooth.lordbritishix.client.IpCameraHttpClient;
+import com.diyphotobooth.lordbritishix.client.MJpegStreamBufferer;
+import com.diyphotobooth.lordbritishix.model.SessionUtils;
+import com.diyphotobooth.lordbritishix.model.Template;
+import com.diyphotobooth.lordbritishix.utils.StageManager;
 
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.MatcherAssert.assertThat;
-import static org.junit.Assert.assertNull;
-import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.*;
 import static org.mockito.Mockito.when;
 
 @RunWith(MockitoJUnitRunner.class)
@@ -36,16 +34,16 @@ public class CameraSceneControllerTest {
     private Template template;
 
     @Mock
-    private SessionManager sessionManager;
+    private MJpegStreamBufferer bufferer;
 
     @Mock
-    private MJpegStreamBufferer bufferer;
+    private SessionUtils sessionUtils;
 
     private CameraSceneController fixture;
 
     @Before
     public void setup() {
-        fixture = new CameraSceneController(stageManager, client, 5, 1, template, sessionManager);
+        fixture = new CameraSceneController(stageManager, client, 5, 1, template, "", sessionUtils);
     }
 
     @Test
@@ -126,4 +124,6 @@ public class CameraSceneControllerTest {
         assertThat(dataCount.get(), is(0));
         assertThat(startedCount.get(), is(1));
     }
+
+    //TODO: Write test for startSession
 }

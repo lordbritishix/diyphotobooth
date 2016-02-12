@@ -1,112 +1,88 @@
 package com.diyphotobooth.lordbritishix.model;
 
-import com.google.common.collect.ImmutableMap;
-import com.google.common.collect.Maps;
-import lombok.ToString;
-import org.codehaus.jackson.annotate.JsonIgnore;
-import org.codehaus.jackson.map.ObjectMapper;
-
 import java.io.IOException;
 import java.time.LocalDateTime;
 import java.time.ZoneOffset;
 import java.util.Map;
 import java.util.UUID;
+import org.codehaus.jackson.map.ObjectMapper;
+import org.codehaus.jackson.map.annotate.JsonDeserialize;
+import org.codehaus.jackson.map.annotate.JsonSerialize;
+import com.diyphotobooth.lordbritishix.model.converter.SessionDeserializer;
+import com.diyphotobooth.lordbritishix.model.converter.SessionSerializer;
+import com.google.common.collect.Maps;
+
+import lombok.AllArgsConstructor;
+import lombok.Builder;
+import lombok.Data;
+import lombok.EqualsAndHashCode;
+import lombok.ToString;
 
 /**
  * Session represents an active photo shoot session where:
  *
  * numOfPhotosToBeTaken is the number of shots to be taken
- * numOfCurrentPhotosTaken is the number of current photos taken
+ * numberOfPhotosAlreadyTaken is the number of current photos taken
  */
+@Data
+@Builder
+@AllArgsConstructor
 @ToString
+@EqualsAndHashCode
+@JsonSerialize(using = SessionSerializer.class)
+@JsonDeserialize(using = SessionDeserializer.class)
 public class Session {
+    public enum State {
+        TAKING_PHOTO,
+        DONE_TAKING_PHOTO,
+        PREPARING_MONTAGE,
+        PRINTING,
+        DONE,
+        ERROR
+    }
+
     private final UUID sessionId;
-    private final int numOfPhotosToBeTaken;
-    private int numOfCurrentPhotosTaken;
-    private final LocalDateTime dateTime;
-    private boolean forceComplete = false;
-    private boolean isPrinted = false;
+    private final int numberOfPhotosToBeTaken;
     private final Template template;
     private final Map<Integer, String> imageMap;
+    private final LocalDateTime sessionDate;
+    private int numberOfPhotosAlreadyTaken;
+    private boolean isPrinted = false;
+    private State state;
 
-    public Session(int numOfPhotosToBeTaken, Template template) {
-        if (numOfPhotosToBeTaken < 0) {
-            throw new IllegalStateException("numOfPhotosToBeTaken must be greater than or equal to 0");
+    public Session(int numberOfPhotosToBeTaken, Template template) {
+        if (numberOfPhotosToBeTaken < 0) {
+            throw new IllegalStateException("numberOfPhotosToBeTaken must be >= to 0");
         }
 
         this.sessionId = UUID.randomUUID();
-        this.numOfPhotosToBeTaken = numOfPhotosToBeTaken;
-        this.dateTime = LocalDateTime.now(ZoneOffset.UTC);
+        this.numberOfPhotosToBeTaken = numberOfPhotosToBeTaken;
+        this.sessionDate = LocalDateTime.now(ZoneOffset.UTC);
         this.template = template;
-        this.imageMap = Maps.newConcurrentMap();
+        this.imageMap = Maps.newHashMap();
+        this.state = State.TAKING_PHOTO;
     }
 
-    public synchronized boolean isSessionFinished() {
-        return (numOfPhotosToBeTaken == numOfCurrentPhotosTaken) || (forceComplete);
-    }
-
-    public synchronized int nextPhoto() {
+    public int nextPhoto() {
         if (isSessionFinished()) {
             throw new IllegalStateException("Unable to proceed to the next step - session is complete");
         }
 
-        numOfCurrentPhotosTaken++;
-
-        return numOfCurrentPhotosTaken;
+        numberOfPhotosAlreadyTaken++;
+        return numberOfPhotosAlreadyTaken;
     }
 
-    public void forceCompleteSession() {
-        forceComplete = true;
+    public boolean isSessionFinished() {
+        return (numberOfPhotosAlreadyTaken >= numberOfPhotosToBeTaken) || (state == State.DONE) || (state == State.ERROR);
     }
 
-    public boolean isSessionCompletedByForce() {
-        return forceComplete;
-    }
-
-    public void setIsPrinted(boolean isPrinted) {
-        this.isPrinted = isPrinted;
-    }
-
-    public boolean isPrinted() {
-        return this.isPrinted;
-    }
-
-    public Template getTemplate() {
-        return template;
-    }
-
-    public synchronized int getPhotoCountTaken() {
-        return numOfCurrentPhotosTaken;
-    }
-
-    public void mapImageWithCurrentId(String imageName) {
-        imageMap.put(getPhotoCountTaken(), imageName);
-    }
-
-    public UUID getSessionId() {
-        return sessionId;
-    }
-
-    public int getNumOfPhotosToBeTaken() {
-        return numOfPhotosToBeTaken;
-    }
-
-    @JsonIgnore
-    public LocalDateTime getSessionDate() {
-        return dateTime;
-    }
-
-    public long getSessionDateAsEpoch() {
-        return  dateTime.toInstant(ZoneOffset.UTC).toEpochMilli();
-    }
-
-    public Map<Integer, String> getImageMap() {
-        return ImmutableMap.copyOf(imageMap);
-    }
-
-    public String serialize() throws IOException {
+    public String toJson() throws IOException {
         ObjectMapper mapper = new ObjectMapper();
         return mapper.writeValueAsString(this);
     }
 
+    public static Session fromJson(String json) throws IOException {
+        ObjectMapper objectMapper = new ObjectMapper();
+        return objectMapper.readValue(json, Session.class);
+    }
 }

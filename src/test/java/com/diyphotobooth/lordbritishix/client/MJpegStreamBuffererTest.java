@@ -6,6 +6,7 @@ import java.util.List;
 import java.util.concurrent.CountDownLatch;
 import org.apache.commons.lang3.tuple.Pair;
 import org.junit.Test;
+import com.diyphotobooth.lordbritishix.TestUtils;
 import com.google.common.collect.Lists;
 
 import static org.hamcrest.MatcherAssert.assertThat;
@@ -79,8 +80,9 @@ public class MJpegStreamBuffererTest {
     @Test
     public void bufferBuffersAllData() throws IOException, InterruptedException {
         CountDownLatch stopLatch = new CountDownLatch(1);
+        int size = 100;
 
-        Pair<InputStream, List<byte[]>> stream = TestUtils.generateStream(100);
+        Pair<InputStream, List<byte[]>> stream = TestUtils.generateStream(size);
 
         MJpegStreamBufferer buffer = new MJpegStreamBufferer(200);
 
@@ -104,26 +106,30 @@ public class MJpegStreamBuffererTest {
             }
         }, new MJpegStreamIterator(stream.getLeft()));
 
-        //Wait until first write
         List<byte[]> streams = Lists.newArrayList();
         CountDownLatch readLatchGet = new CountDownLatch(1);
         Thread t = new Thread(() -> {
             while(true) {
-                byte[] data = buffer.get();
-                if (buffer.isStopped() && data == null) {
+                if (buffer.isStopped()) {
                     break;
                 }
-                streams.add(data);
+
+                byte[] data = buffer.get();
+
+                if (data != null) {
+                    streams.add(data);
+                }
             }
 
             readLatchGet.countDown();
         });
 
         t.start();
-        readLatchGet.await();
-        assertThat(streams.size(), is(100));
 
-        for (int x = 0; x < 100; ++x) {
+        readLatchGet.await();
+        assertThat(streams.size(), is(size));
+
+        for (int x = 0; x < size; ++x) {
             assertThat(streams.get(x), is(stream.getRight().get(x)));
         }
 
