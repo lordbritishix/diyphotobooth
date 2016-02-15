@@ -125,5 +125,5 @@ public class CameraSceneControllerTest {
         assertThat(startedCount.get(), is(1));
     }
 
-    //TODO: Write test for startSession
+    //TODO: Write queueSessionProcessesQueuedSessionAfterAWhile for startSession
 }
