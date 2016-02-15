@@ -5,6 +5,8 @@ import java.nio.charset.StandardCharsets;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
+
+import com.diyphotobooth.lordbritishix.jobprocessor.JobProcessor;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -39,11 +41,14 @@ public class CameraSceneControllerTest {
     @Mock
     private SessionUtils sessionUtils;
 
+    @Mock
+    private JobProcessor jobProcessor;
+
     private CameraSceneController fixture;
 
     @Before
     public void setup() {
-        fixture = new CameraSceneController(stageManager, client, 5, 1, template, "", sessionUtils);
+        fixture = new CameraSceneController(stageManager, client, 5, 1, template, "", sessionUtils, jobProcessor);
     }
 
     @Test

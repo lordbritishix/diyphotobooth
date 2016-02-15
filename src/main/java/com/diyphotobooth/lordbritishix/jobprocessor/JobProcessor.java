@@ -2,13 +2,20 @@ package com.diyphotobooth.lordbritishix.jobprocessor;
 
 import com.diyphotobooth.lordbritishix.model.Session;
 import com.google.common.annotations.VisibleForTesting;
+import com.google.common.collect.Lists;
 import com.google.common.collect.Queues;
+import com.google.inject.Inject;
+import com.google.inject.Singleton;
 import com.google.inject.name.Named;
 import lombok.Data;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.io.FileUtils;
 
+import java.io.File;
+import java.io.IOException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.Iterator;
 import java.util.List;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.CountDownLatch;
@@ -32,25 +39,27 @@ import java.util.function.Consumer;
  * Once the Job Processor is stopped, it can never be restarted again
  */
 @Slf4j
+@Singleton
 public class JobProcessor {
     private final Path snapshotFolder;
     private final BlockingQueue<Session> jobs = Queues.newLinkedBlockingDeque();
     private final JobProcessorStopper stopper;
     private final ExecutorService executorService;
-    private final List<Consumer<Session>> processingPipeline;
 
-    public JobProcessor(
-            @Named("snapshot.folder") String snapshotFolder,
-            @Named("processing.pipeline") List<Consumer<Session>> processingPipeline) {
+    @Inject
+    public JobProcessor(@Named("snapshot.folder") String snapshotFolder) {
         this.snapshotFolder = Paths.get(snapshotFolder);
         this.stopper = new JobProcessorStopper();
         this.executorService = Executors.newSingleThreadExecutor();
-        this.processingPipeline = processingPipeline;
     }
 
-    public void start() throws InterruptedException {
+    public void start(List<Consumer<Session>> processingPipeline) throws InterruptedException {
         CountDownLatch latch = new CountDownLatch(1);
         Future<Void> future = executorService.submit(() -> {
+            List<Session> previousUnprocessedSessions = getUnprocessedSessionsFromDirectory(snapshotFolder);
+            previousUnprocessedSessions.forEach(p -> log.debug("Attempting to reprocess previous session: {}", p.toString()));
+            jobs.addAll(previousUnprocessedSessions);
+
             latch.countDown();
             log.debug("Starting Job Processor");
             while (!stopper.isStopped()) {
@@ -73,8 +82,18 @@ public class JobProcessor {
     }
 
     @VisibleForTesting
-    void processSessionsFromDirectory(Path directory) {
+    List<Session> getUnprocessedSessionsFromDirectory(Path snapshotDir) throws IOException {
+        Iterator<File> files = FileUtils.iterateFiles(snapshotDir.toFile(), new String[]{"json"}, true);
+        List<Session> unprocessedSessions = Lists.newArrayList();
 
+        while (files.hasNext()) {
+            Session session = Session.fromJsonInFile(files.next());
+            if (isSessionUnprocessed(session)) {
+                unprocessedSessions.add(session);
+            }
+        }
+
+        return unprocessedSessions;
     }
 
     public void stop() throws ExecutionException, InterruptedException {
@@ -83,7 +102,16 @@ public class JobProcessor {
     }
 
     public void queueSession(Session session) {
-        jobs.add(session);
+        if (isSessionUnprocessed(session)) {
+            log.debug("Sending session to the processor: {} ", session.toString());
+            jobs.add(session);
+        }
+    }
+
+    private boolean isSessionUnprocessed(Session session) {
+        return session.getState() == Session.State.DONE_TAKING_PHOTO ||
+                session.getState() == Session.State.PREPARING_MONTAGE ||
+                session.getState() == Session.State.PRINTING;
     }
 
     @Data

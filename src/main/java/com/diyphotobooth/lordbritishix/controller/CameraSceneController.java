@@ -1,5 +1,27 @@
 package com.diyphotobooth.lordbritishix.controller;
 
+import com.diyphotobooth.lordbritishix.client.IpCameraException;
+import com.diyphotobooth.lordbritishix.client.IpCameraHttpClient;
+import com.diyphotobooth.lordbritishix.client.MJpegStreamBufferListener;
+import com.diyphotobooth.lordbritishix.client.MJpegStreamBufferer;
+import com.diyphotobooth.lordbritishix.client.MJpegStreamIterator;
+import com.diyphotobooth.lordbritishix.jobprocessor.JobProcessor;
+import com.diyphotobooth.lordbritishix.model.Session;
+import com.diyphotobooth.lordbritishix.model.SessionUtils;
+import com.diyphotobooth.lordbritishix.model.Template;
+import com.diyphotobooth.lordbritishix.scene.CameraScene;
+import com.diyphotobooth.lordbritishix.scene.IdleScene;
+import com.diyphotobooth.lordbritishix.utils.StageManager;
+import com.google.common.annotations.VisibleForTesting;
+import com.google.inject.Inject;
+import com.google.inject.name.Named;
+import javafx.application.Platform;
+import javafx.scene.Node;
+import javafx.scene.input.MouseEvent;
+import javafx.scene.media.AudioClip;
+import lombok.Data;
+import lombok.extern.slf4j.Slf4j;
+
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.InputStream;
@@ -16,27 +38,6 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.function.Consumer;
 import java.util.function.Function;
-import com.diyphotobooth.lordbritishix.client.IpCameraException;
-import com.diyphotobooth.lordbritishix.client.IpCameraHttpClient;
-import com.diyphotobooth.lordbritishix.client.MJpegStreamBufferListener;
-import com.diyphotobooth.lordbritishix.client.MJpegStreamBufferer;
-import com.diyphotobooth.lordbritishix.client.MJpegStreamIterator;
-import com.diyphotobooth.lordbritishix.model.Session;
-import com.diyphotobooth.lordbritishix.model.SessionUtils;
-import com.diyphotobooth.lordbritishix.model.Template;
-import com.diyphotobooth.lordbritishix.scene.CameraScene;
-import com.diyphotobooth.lordbritishix.scene.IdleScene;
-import com.diyphotobooth.lordbritishix.utils.StageManager;
-import com.google.common.annotations.VisibleForTesting;
-import com.google.inject.Inject;
-import com.google.inject.name.Named;
-
-import javafx.application.Platform;
-import javafx.scene.Node;
-import javafx.scene.input.MouseEvent;
-import javafx.scene.media.AudioClip;
-import lombok.Data;
-import lombok.extern.slf4j.Slf4j;
 
 /**
  * Controls the Camera Scene
@@ -71,6 +72,7 @@ public class CameraSceneController extends BaseController implements MJpegStream
     private final AtomicLong discardedCount = new AtomicLong();
     private final Path snapshotFolder;
     private final SessionUtils sessionUtils;
+    private final JobProcessor jobProcessor;
 
     @Inject
     public CameraSceneController(StageManager stageManager,
@@ -79,7 +81,8 @@ public class CameraSceneController extends BaseController implements MJpegStream
                                  @Named("countdown.length.sec") int countdownLengthInSeconds,
                                  Template template,
                                  @Named("snapshot.folder") String snapshotFolder,
-                                 SessionUtils sessionUtils) {
+                                 SessionUtils sessionUtils,
+                                 JobProcessor jobProcessor) {
         super(stageManager);
         this.client = client;
         this.state = State.STOPPED;
@@ -89,6 +92,7 @@ public class CameraSceneController extends BaseController implements MJpegStream
         this.viewFinderStopper = Optional.empty();
         this.snapshotFolder = Paths.get(snapshotFolder);
         this.sessionUtils = sessionUtils;
+        this.jobProcessor = jobProcessor;
     }
 
     @Override
@@ -141,8 +145,9 @@ public class CameraSceneController extends BaseController implements MJpegStream
                 //After the viewfinder starts, start the session
                 streamingToSessionStart()
                     //Once the session completes without without error, end the session without error
-                    .thenRun(() -> {
+                    .thenAccept((session) -> {
                         try {
+                            jobProcessor.queueSession(session);
                             sessionStartToSessionEnd(false);
                         } catch (Exception e) {
                             log.error("Unable to transition from SessionStart to SessionEnd", e);

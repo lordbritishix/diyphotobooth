@@ -1,22 +1,28 @@
 package com.diyphotobooth.lordbritishix.model;
 
-import java.io.IOException;
-import java.time.LocalDateTime;
-import java.time.ZoneOffset;
-import java.util.Map;
-import java.util.UUID;
-import org.codehaus.jackson.map.ObjectMapper;
-import org.codehaus.jackson.map.annotate.JsonDeserialize;
-import org.codehaus.jackson.map.annotate.JsonSerialize;
 import com.diyphotobooth.lordbritishix.model.converter.SessionDeserializer;
 import com.diyphotobooth.lordbritishix.model.converter.SessionSerializer;
 import com.google.common.collect.Maps;
-
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.ToString;
+import org.apache.commons.io.IOUtils;
+import org.apache.commons.io.output.ByteArrayOutputStream;
+import org.codehaus.jackson.map.ObjectMapper;
+import org.codehaus.jackson.map.annotate.JsonDeserialize;
+import org.codehaus.jackson.map.annotate.JsonSerialize;
+
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.IOException;
+import java.io.InputStream;
+import java.nio.charset.StandardCharsets;
+import java.time.LocalDateTime;
+import java.time.ZoneOffset;
+import java.util.Map;
+import java.util.UUID;
 
 /**
  * Session represents an active photo shoot session where:
@@ -85,4 +91,14 @@ public class Session {
         ObjectMapper objectMapper = new ObjectMapper();
         return objectMapper.readValue(json, Session.class);
     }
+
+    public static Session fromJsonInFile(File jsonInFile) throws IOException {
+        try (InputStream is = new FileInputStream(jsonInFile)) {
+            ByteArrayOutputStream baos = new ByteArrayOutputStream();
+            IOUtils.copy(is, baos);
+            String json = new String(baos.toByteArray(), StandardCharsets.UTF_8);
+            return Session.fromJson(json);
+        }
+    }
+
 }
