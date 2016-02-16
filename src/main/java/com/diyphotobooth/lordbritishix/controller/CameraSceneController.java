@@ -1,27 +1,5 @@
 package com.diyphotobooth.lordbritishix.controller;
 
-import com.diyphotobooth.lordbritishix.client.IpCameraException;
-import com.diyphotobooth.lordbritishix.client.IpCameraHttpClient;
-import com.diyphotobooth.lordbritishix.client.MJpegStreamBufferListener;
-import com.diyphotobooth.lordbritishix.client.MJpegStreamBufferer;
-import com.diyphotobooth.lordbritishix.client.MJpegStreamIterator;
-import com.diyphotobooth.lordbritishix.jobprocessor.JobProcessor;
-import com.diyphotobooth.lordbritishix.model.Session;
-import com.diyphotobooth.lordbritishix.model.SessionUtils;
-import com.diyphotobooth.lordbritishix.model.Template;
-import com.diyphotobooth.lordbritishix.scene.CameraScene;
-import com.diyphotobooth.lordbritishix.scene.IdleScene;
-import com.diyphotobooth.lordbritishix.utils.StageManager;
-import com.google.common.annotations.VisibleForTesting;
-import com.google.inject.Inject;
-import com.google.inject.name.Named;
-import javafx.application.Platform;
-import javafx.scene.Node;
-import javafx.scene.input.MouseEvent;
-import javafx.scene.media.AudioClip;
-import lombok.Data;
-import lombok.extern.slf4j.Slf4j;
-
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.InputStream;
@@ -38,6 +16,27 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.function.Consumer;
 import java.util.function.Function;
+import com.diyphotobooth.lordbritishix.client.IpCameraException;
+import com.diyphotobooth.lordbritishix.client.IpCameraHttpClient;
+import com.diyphotobooth.lordbritishix.client.MJpegStreamBufferListener;
+import com.diyphotobooth.lordbritishix.client.MJpegStreamBufferer;
+import com.diyphotobooth.lordbritishix.client.MJpegStreamIterator;
+import com.diyphotobooth.lordbritishix.jobprocessor.JobProcessor;
+import com.diyphotobooth.lordbritishix.model.Session;
+import com.diyphotobooth.lordbritishix.model.SessionUtils;
+import com.diyphotobooth.lordbritishix.scene.CameraScene;
+import com.diyphotobooth.lordbritishix.scene.IdleScene;
+import com.diyphotobooth.lordbritishix.utils.StageManager;
+import com.google.common.annotations.VisibleForTesting;
+import com.google.inject.Inject;
+import com.google.inject.name.Named;
+
+import javafx.application.Platform;
+import javafx.scene.Node;
+import javafx.scene.input.MouseEvent;
+import javafx.scene.media.AudioClip;
+import lombok.Data;
+import lombok.extern.slf4j.Slf4j;
 
 /**
  * Controls the Camera Scene
@@ -66,33 +65,33 @@ public class CameraSceneController extends BaseController implements MJpegStream
     private final IpCameraHttpClient client;
     private final int bufferSize;
     private final int countdownLengthInSeconds;
-    private final Template template;
     private volatile State state;
     private volatile Optional<ViewFinderStopper> viewFinderStopper;
     private final AtomicLong discardedCount = new AtomicLong();
     private final Path snapshotFolder;
     private final SessionUtils sessionUtils;
     private final JobProcessor jobProcessor;
+    private final int photoCount;
 
     @Inject
     public CameraSceneController(StageManager stageManager,
                                  IpCameraHttpClient client,
                                  @Named("buffer.size") int bufferSize,
                                  @Named("countdown.length.sec") int countdownLengthInSeconds,
-                                 Template template,
                                  @Named("snapshot.folder") String snapshotFolder,
                                  SessionUtils sessionUtils,
-                                 JobProcessor jobProcessor) {
+                                 JobProcessor jobProcessor,
+                                 @Named("photo.count") int photoCount) {
         super(stageManager);
         this.client = client;
         this.state = State.STOPPED;
         this.bufferSize = bufferSize;
         this.countdownLengthInSeconds = countdownLengthInSeconds;
-        this.template = template;
         this.viewFinderStopper = Optional.empty();
         this.snapshotFolder = Paths.get(snapshotFolder);
         this.sessionUtils = sessionUtils;
         this.jobProcessor = jobProcessor;
+        this.photoCount = photoCount;
     }
 
     @Override
@@ -245,12 +244,12 @@ public class CameraSceneController extends BaseController implements MJpegStream
 
         Platform.runLater(() -> {
             ((CameraScene) getScene()).setCountdownText("Ready?");
-            ((CameraScene) getScene()).setCounterValue(1, template.getPhotoCount());
+            ((CameraScene) getScene()).setCounterValue(1, photoCount);
         });
 
         state = State.SESSION_START;
         return startSession(
-                template.getPhotoCount(),
+                photoCount,
                 countdownLengthInSeconds,
                 1,
                 (session) -> {
@@ -259,7 +258,7 @@ public class CameraSceneController extends BaseController implements MJpegStream
                         imageName = sessionUtils.writeImageToCurrentSession(session, is, snapshotFolder);
                         if (!session.isSessionFinished()) {
                             Platform.runLater(() -> ((CameraScene) getScene()).setCounterValue(
-                                    session.getNumberOfPhotosAlreadyTaken() + 1, template.getPhotoCount()));
+                                    session.getNumberOfPhotosAlreadyTaken() + 1, photoCount));
                         }
                     } catch (IpCameraException | IOException e) {
                         throw new RuntimeException(e);
@@ -299,7 +298,7 @@ public class CameraSceneController extends BaseController implements MJpegStream
         return CompletableFuture.supplyAsync(() -> {
             Session session;
             try {
-                session = sessionUtils.newSession(photoCount, template, snapshotFolder);
+                session = sessionUtils.newSession(photoCount, snapshotFolder);
                 log.info("Session started: {}, {}", session.getSessionId(), session.getSessionDate().toString());
             } catch (Exception e) {
                 throw new RuntimeException("Unable to start the session", e);

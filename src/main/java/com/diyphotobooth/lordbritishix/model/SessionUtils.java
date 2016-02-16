@@ -22,8 +22,8 @@ public class SessionUtils {
     /**
      * Creates a new session.
      */
-    public Session newSession(int photoCount, Template template, Path snapshotFolder) throws IOException {
-        Session session = new Session(photoCount, template);
+    public Session newSession(int photoCount, Path snapshotFolder) throws IOException {
+        Session session = new Session(photoCount);
         writeSessionMetadataToDisk(snapshotFolder, session);
 
         return session;
@@ -51,7 +51,7 @@ public class SessionUtils {
         return imageName;
     }
 
-    private Path getSessionDir(Path snapshotDir, Session session) {
+    public Path getSessionDir(Path snapshotDir, Session session) {
         return Paths.get(snapshotDir.toString(), session.getSessionId().toString());
     }
 

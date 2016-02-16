@@ -1,28 +1,31 @@
 package com.diyphotobooth.lordbritishix.model;
 
-import com.diyphotobooth.lordbritishix.model.converter.SessionDeserializer;
-import com.diyphotobooth.lordbritishix.model.converter.SessionSerializer;
-import com.google.common.collect.Maps;
-import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.Data;
-import lombok.EqualsAndHashCode;
-import lombok.ToString;
-import org.apache.commons.io.IOUtils;
-import org.apache.commons.io.output.ByteArrayOutputStream;
-import org.codehaus.jackson.map.ObjectMapper;
-import org.codehaus.jackson.map.annotate.JsonDeserialize;
-import org.codehaus.jackson.map.annotate.JsonSerialize;
-
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
+import java.nio.file.Path;
 import java.time.LocalDateTime;
 import java.time.ZoneOffset;
+import java.util.List;
 import java.util.Map;
 import java.util.UUID;
+import java.util.stream.Collectors;
+import org.apache.commons.io.IOUtils;
+import org.apache.commons.io.output.ByteArrayOutputStream;
+import org.codehaus.jackson.map.ObjectMapper;
+import org.codehaus.jackson.map.annotate.JsonDeserialize;
+import org.codehaus.jackson.map.annotate.JsonSerialize;
+import com.diyphotobooth.lordbritishix.model.converter.SessionDeserializer;
+import com.diyphotobooth.lordbritishix.model.converter.SessionSerializer;
+import com.google.common.collect.Maps;
+
+import lombok.AllArgsConstructor;
+import lombok.Builder;
+import lombok.Data;
+import lombok.EqualsAndHashCode;
+import lombok.ToString;
 
 /**
  * Session represents an active photo shoot session where:
@@ -49,14 +52,14 @@ public class Session {
 
     private final UUID sessionId;
     private final int numberOfPhotosToBeTaken;
-    private final Template template;
     private final Map<Integer, String> imageMap;
     private final LocalDateTime sessionDate;
     private int numberOfPhotosAlreadyTaken;
     private boolean isPrinted = false;
     private State state;
+    private Path montage;
 
-    public Session(int numberOfPhotosToBeTaken, Template template) {
+    public Session(int numberOfPhotosToBeTaken) {
         if (numberOfPhotosToBeTaken < 0) {
             throw new IllegalStateException("numberOfPhotosToBeTaken must be >= to 0");
         }
@@ -64,8 +67,7 @@ public class Session {
         this.sessionId = UUID.randomUUID();
         this.numberOfPhotosToBeTaken = numberOfPhotosToBeTaken;
         this.sessionDate = LocalDateTime.now(ZoneOffset.UTC);
-        this.template = template;
-        this.imageMap = Maps.newHashMap();
+        this.imageMap = Maps.newLinkedHashMap();
         this.state = State.TAKING_PHOTO;
     }
 
@@ -80,6 +82,10 @@ public class Session {
 
     public boolean isSessionFinished() {
         return (numberOfPhotosAlreadyTaken >= numberOfPhotosToBeTaken) || (state == State.DONE) || (state == State.ERROR);
+    }
+
+    public List<String> getImagesAsList() {
+        return imageMap.values().stream().collect(Collectors.toList());
     }
 
     public String toJson() throws IOException {

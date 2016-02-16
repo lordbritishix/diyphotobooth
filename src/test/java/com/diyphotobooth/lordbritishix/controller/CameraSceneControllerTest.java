@@ -5,8 +5,6 @@ import java.nio.charset.StandardCharsets;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
-
-import com.diyphotobooth.lordbritishix.jobprocessor.JobProcessor;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -15,8 +13,8 @@ import org.mockito.runners.MockitoJUnitRunner;
 import com.diyphotobooth.lordbritishix.client.IpCameraException;
 import com.diyphotobooth.lordbritishix.client.IpCameraHttpClient;
 import com.diyphotobooth.lordbritishix.client.MJpegStreamBufferer;
+import com.diyphotobooth.lordbritishix.jobprocessor.JobProcessor;
 import com.diyphotobooth.lordbritishix.model.SessionUtils;
-import com.diyphotobooth.lordbritishix.model.Template;
 import com.diyphotobooth.lordbritishix.utils.StageManager;
 
 import static org.hamcrest.CoreMatchers.is;
@@ -33,9 +31,6 @@ public class CameraSceneControllerTest {
     private StageManager stageManager;
 
     @Mock
-    private Template template;
-
-    @Mock
     private MJpegStreamBufferer bufferer;
 
     @Mock
@@ -48,7 +43,7 @@ public class CameraSceneControllerTest {
 
     @Before
     public void setup() {
-        fixture = new CameraSceneController(stageManager, client, 5, 1, template, "", sessionUtils, jobProcessor);
+        fixture = new CameraSceneController(stageManager, client, 5, 1, "", sessionUtils, jobProcessor, 4);
     }
 
     @Test

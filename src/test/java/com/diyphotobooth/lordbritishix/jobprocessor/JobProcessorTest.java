@@ -1,15 +1,5 @@
 package com.diyphotobooth.lordbritishix.jobprocessor;
 
-import com.diyphotobooth.lordbritishix.model.Session;
-import com.diyphotobooth.lordbritishix.model.Template;
-import com.google.common.collect.ImmutableList;
-import com.google.common.collect.Lists;
-import com.google.common.collect.Maps;
-import org.apache.commons.io.FileUtils;
-import org.junit.After;
-import org.junit.Before;
-import org.junit.Test;
-
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.OutputStream;
@@ -24,6 +14,14 @@ import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
+import org.apache.commons.io.FileUtils;
+import org.junit.After;
+import org.junit.Before;
+import org.junit.Test;
+import com.diyphotobooth.lordbritishix.model.Session;
+import com.google.common.collect.ImmutableList;
+import com.google.common.collect.Lists;
+import com.google.common.collect.Maps;
 
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.core.Is.is;
@@ -138,7 +136,6 @@ public class JobProcessorTest {
                     .sessionDate(LocalDateTime.now())
                     .state(state)
                     .imageMap(Maps.newHashMap())
-                    .template(Template.builder().templateFile(snapshotFolder).name(UUID.randomUUID().toString()).build())
                     .build();
             Path sessionDir = Files.createDirectories(Paths.get(snapshotFolder.toString(), UUID.randomUUID().toString()));
             String json = session.toJson();

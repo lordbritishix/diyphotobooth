@@ -10,7 +10,7 @@ import static org.hamcrest.core.Is.is;
 public class SessionTest {
     @Test
     public void nextPhotoMovesSessionToNextPhoto() throws IOException {
-        Session session = new Session(2, new Template("Default template", Paths.get("/"), 10));
+        Session session = new Session(2);
         assertThat(session.nextPhoto(), is(1));
         assertThat(session.isSessionFinished(), is(false));
         assertThat(session.nextPhoto(), is(2));
@@ -19,15 +19,16 @@ public class SessionTest {
 
     @Test(expected = IllegalStateException.class)
     public void nextPhotoAfterLastThrowsException() throws IOException {
-        Session session = new Session(1, null);
+        Session session = new Session(1);
         session.nextPhoto();
         session.nextPhoto();
     }
 
     @Test
     public void canRoundtrip() throws IOException {
-        Session session = new Session(2, new Template("Default template", Paths.get("/"), 10));
+        Session session = new Session(2);
         session.setPrinted(true);
+        session.setMontage(Paths.get("/temp"));
         session.setState(Session.State.PREPARING_MONTAGE);
 
         session.getImageMap().put(1, "1.jpg");

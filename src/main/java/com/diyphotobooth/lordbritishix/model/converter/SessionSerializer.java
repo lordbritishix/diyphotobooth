@@ -17,7 +17,7 @@ public class SessionSerializer extends JsonSerializer<Session> {
         jsonGenerator.writeNumberField("sessionDateAsEpoch", session.getSessionDate().toInstant(ZoneOffset.UTC).toEpochMilli());
         jsonGenerator.writeBooleanField("isPrinted", session.isPrinted());
         jsonGenerator.writeStringField("state", session.getState().name());
-        jsonGenerator.writeObjectField("template", session.getTemplate());
         jsonGenerator.writeObjectField("imageMap", session.getImageMap());
+        jsonGenerator.writeObjectField("montage", session.getMontage() != null ? session.getMontage().toString() : "");
     }
 }

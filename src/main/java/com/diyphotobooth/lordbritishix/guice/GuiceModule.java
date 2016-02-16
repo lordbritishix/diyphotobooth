@@ -1,19 +1,18 @@
 package com.diyphotobooth.lordbritishix.guice;
 
-import com.diyphotobooth.lordbritishix.model.Template;
-import com.diyphotobooth.lordbritishix.utils.StageManager;
-import com.google.inject.AbstractModule;
-import com.google.inject.Provides;
-import com.google.inject.name.Names;
-import javafx.stage.Stage;
-
-import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.util.Properties;
+import org.gm4java.engine.GMService;
+import org.gm4java.engine.support.SimpleGMService;
+import com.diyphotobooth.lordbritishix.utils.StageManager;
+import com.google.inject.AbstractModule;
+import com.google.inject.Provides;
+import com.google.inject.name.Names;
+
+import javafx.stage.Stage;
 
 /**
  * Sets up DI configuration
@@ -42,10 +41,12 @@ public class GuiceModule extends AbstractModule {
                     .to(Integer.parseInt(properties.get("buffer.size").toString()));
             bindConstant().annotatedWith(Names.named("countdown.length.sec"))
                     .to(Integer.parseInt(properties.get("countdown.length.sec").toString()));
-            bindConstant().annotatedWith(Names.named("template.filename"))
-                    .to(properties.get("template.filename").toString());
+            bindConstant().annotatedWith(Names.named("resources.folder"))
+                    .to(properties.get("resources.folder").toString());
             bindConstant().annotatedWith(Names.named("snapshot.folder"))
                     .to(properties.get("snapshot.folder").toString());
+            bindConstant().annotatedWith(Names.named("photo.count"))
+                    .to(properties.get("photo.count").toString());
         } catch (IOException e) {
             throw new RuntimeException("Unable to load settings file specified by " + settingsFolder.toString(), e);
         }
@@ -65,11 +66,7 @@ public class GuiceModule extends AbstractModule {
     }
 
     @Provides
-    Template templateProvider() throws IOException {
-        Properties properties = loadFromFile(settingsFolder);
-        File templateFile = Paths.get(properties.getProperty("template.filename")).toFile();
-        try (InputStream is = new FileInputStream(templateFile)) {
-            return Template.fromJson(is);
-        }
+    GMService gmServiceProvider() {
+        return new SimpleGMService();
     }
 }
