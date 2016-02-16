@@ -70,6 +70,26 @@ public class MontageProcessorTest {
     }
 
     @Test
+    public void acceptDoesNotUpdateStateWhenMontageMakerFails() {
+        Session session = Session.builder()
+                .state(Session.State.DONE_TAKING_PHOTO)
+                .imageMap(
+                        ImmutableMap.of(1, "/home/jim.quitevis/tmp/session/1.png",
+                                2, "/home/jim.quitevis/tmp/session/2.png",
+                                3, "/home/jim.quitevis/tmp/session/3.png",
+                                4, "/home/jim.quitevis/tmp/session/4.png"))
+                .sessionId(UUID.randomUUID())
+                .numberOfPhotosToBeTaken(4)
+                .numberOfPhotosAlreadyTaken(4)
+                .build();
+
+        when(montageMaker.apply(any(Session.class), any(Path.class))).thenReturn(null);
+
+        fixture.accept(session);
+        verify(sessionUtils).updateSessionStateAndPersistQuietly(any(Path.class), any(Session.class), eq(Session.State.ERROR));
+    }
+
+    @Test
     public void acceptDoesNotProcessInvalidSession1() {
         Session session = Session.builder()
                 .state(Session.State.TAKING_PHOTO)
