@@ -3,6 +3,7 @@ package com.diyphotobooth.lordbritishix.controller;
 import com.diyphotobooth.lordbritishix.scene.CameraScene;
 import com.diyphotobooth.lordbritishix.utils.StageManager;
 import com.google.inject.Inject;
+import javafx.application.Platform;
 import javafx.scene.Node;
 import javafx.scene.input.MouseEvent;
 import javafx.scene.media.AudioClip;
@@ -21,7 +22,7 @@ public class IdleSceneController extends BaseController {
     @Override
     public void handle(Node node, MouseEvent e) {
         START.play();
-        getStageManager().showScene(CameraScene.class);
+        Platform.runLater(() -> getStageManager().showScene(CameraScene.class));
     }
 
     @Override

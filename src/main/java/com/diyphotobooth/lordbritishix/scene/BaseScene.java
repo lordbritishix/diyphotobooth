@@ -1,8 +1,6 @@
 package com.diyphotobooth.lordbritishix.scene;
 
 import com.diyphotobooth.lordbritishix.controller.BaseController;
-import com.diyphotobooth.lordbritishix.utils.Constants;
-
 import javafx.beans.NamedArg;
 import javafx.scene.Parent;
 import javafx.scene.Scene;
@@ -14,8 +12,11 @@ import javafx.scene.layout.Pane;
 public abstract class BaseScene extends Scene {
     private BaseController controller;
 
-    public BaseScene(@NamedArg("root") Parent root, BaseController controller) {
-        super(root, Constants.WIDTH, Constants.HEIGHT);
+    public BaseScene(@NamedArg("root") Parent root,
+                     BaseController controller,
+                     double width,
+                     double height) {
+        super(root, width, height);
         this.controller = controller;
         this.controller.setScene(this);
 

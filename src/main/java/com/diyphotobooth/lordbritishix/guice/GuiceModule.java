@@ -1,18 +1,20 @@
 package com.diyphotobooth.lordbritishix.guice;
 
+import com.diyphotobooth.lordbritishix.utils.StageManager;
+import com.google.inject.AbstractModule;
+import com.google.inject.Provides;
+import com.google.inject.name.Names;
+import javafx.geometry.Rectangle2D;
+import javafx.stage.Screen;
+import javafx.stage.Stage;
+import org.gm4java.engine.GMService;
+import org.gm4java.engine.support.SimpleGMService;
+
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.file.Path;
 import java.util.Properties;
-import org.gm4java.engine.GMService;
-import org.gm4java.engine.support.SimpleGMService;
-import com.diyphotobooth.lordbritishix.utils.StageManager;
-import com.google.inject.AbstractModule;
-import com.google.inject.Provides;
-import com.google.inject.name.Names;
-
-import javafx.stage.Stage;
 
 /**
  * Sets up DI configuration
@@ -50,6 +52,12 @@ public class GuiceModule extends AbstractModule {
         } catch (IOException e) {
             throw new RuntimeException("Unable to load settings file specified by " + settingsFolder.toString(), e);
         }
+
+        Rectangle2D primaryScreenBounds = Screen.getPrimary().getVisualBounds();
+        bindConstant().annotatedWith(Names.named("screen.width"))
+                .to(primaryScreenBounds.getWidth());
+        bindConstant().annotatedWith(Names.named("screen.height"))
+                .to(primaryScreenBounds.getHeight());
     }
 
     private Properties loadFromFile(Path path) throws IOException {

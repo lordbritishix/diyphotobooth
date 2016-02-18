@@ -2,6 +2,7 @@ package com.diyphotobooth.lordbritishix.scene;
 
 import com.diyphotobooth.lordbritishix.controller.IdleSceneController;
 import com.google.inject.Inject;
+import com.google.inject.name.Named;
 import javafx.scene.layout.StackPane;
 import javafx.scene.text.Text;
 
@@ -12,8 +13,10 @@ import javafx.scene.text.Text;
  */
 public class IdleScene extends BaseScene {
     @Inject
-    public IdleScene(IdleSceneController baseController) {
-        super(new StackPane(), baseController);
+    public IdleScene(IdleSceneController baseController,
+                     @Named("screen.width") double width,
+                     @Named("screen.height") double height) {
+        super(new StackPane(), baseController, width, height);
         Text text = new Text("Tap anywhere to start");
         text.setId("welcome-text");
 

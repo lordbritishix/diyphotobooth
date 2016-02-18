@@ -28,10 +28,7 @@ public class StageManager {
 
     public void showScene(Class<? extends BaseScene> scene) {
         currentScene = injector.getInstance(scene);
-//        currentStage.hide();
         currentStage.setScene(currentScene);
-        currentStage.sizeToScene();
-//        currentStage.setFullScreen(true);
         currentStage.show();
 
         currentScene.getController().sceneLoaded();

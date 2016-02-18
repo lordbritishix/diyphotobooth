@@ -12,6 +12,7 @@ import com.google.common.collect.ImmutableList;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
 import javafx.application.Application;
+import javafx.scene.image.Image;
 import javafx.stage.Stage;
 import lombok.extern.slf4j.Slf4j;
 
@@ -33,8 +34,7 @@ public class App extends Application {
 
         stageManager = injector.getInstance(StageManager.class);
         primaryStage.setTitle("Jim's DIY Photo Booth");
-//        primaryStage.setAlwaysOnTop(true);
-//        primaryStage.setFullScreen(true);
+        primaryStage.getIcons().add(new Image(App.class.getResourceAsStream("/icon.png")));
 
         stageManager.showScene(IdleScene.class);
 
@@ -43,6 +43,7 @@ public class App extends Application {
         PrintProcessor printProcessor = injector.getInstance(PrintProcessor.class);
         DoneProcessor doneProcessor = injector.getInstance(DoneProcessor.class);
         processor.start(ImmutableList.of(montageProcessor, printProcessor, doneProcessor));
+
 
         primaryStage.setOnCloseRequest(p -> {
             log.info("Shutting down");

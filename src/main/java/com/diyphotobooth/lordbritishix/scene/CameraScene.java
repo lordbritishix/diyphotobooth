@@ -3,6 +3,7 @@ package com.diyphotobooth.lordbritishix.scene;
 import com.diyphotobooth.lordbritishix.controller.CameraSceneController;
 import com.diyphotobooth.lordbritishix.utils.StageManager;
 import com.google.inject.Inject;
+import com.google.inject.name.Named;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.image.Image;
@@ -27,8 +28,11 @@ public class CameraScene extends BaseScene {
     private final Countdown countdown;
 
     @Inject
-    public CameraScene(CameraSceneController controller, StageManager stageManager) {
-        super(new StackPane(), controller);
+    public CameraScene(CameraSceneController controller,
+                       StageManager stageManager,
+                       @Named("screen.width") double width,
+                       @Named("screen.height") double height) {
+        super(new StackPane(), controller, width, height);
         this.stageManager = stageManager;
 
         this.imageView = new ImageView();

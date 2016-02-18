@@ -24,6 +24,10 @@ public class DoneProcessor implements Consumer<Session> {
 
     @Override
     public void accept(Session session) {
+        if (session.getState() == Session.State.ERROR) {
+            log.debug("Session is already at terminal state (ERROR), not setting to DONE: {} ", session.toString());
+            return;
+        }
         session.setState(Session.State.DONE);
         sessionUtils.updateSessionStateAndPersistQuietly(snapshotDir, session, Session.State.DONE);
 

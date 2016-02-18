@@ -244,7 +244,7 @@ public class CameraSceneController extends BaseController implements MJpegStream
 
         Platform.runLater(() -> {
             ((CameraScene) getScene()).setCountdownText("Ready?");
-            ((CameraScene) getScene()).setCounterValue(1, photoCount);
+            ((CameraScene) getScene()).setCounterValue(0, photoCount);
         });
 
         state = State.SESSION_START;
@@ -258,7 +258,7 @@ public class CameraSceneController extends BaseController implements MJpegStream
                         imageName = sessionUtils.writeImageToCurrentSession(session, is, snapshotFolder);
                         if (!session.isSessionFinished()) {
                             Platform.runLater(() -> ((CameraScene) getScene()).setCounterValue(
-                                    session.getNumberOfPhotosAlreadyTaken() + 1, photoCount));
+                                    session.getNumberOfPhotosAlreadyTaken(), photoCount));
                         }
                     } catch (IpCameraException | IOException e) {
                         throw new RuntimeException(e);

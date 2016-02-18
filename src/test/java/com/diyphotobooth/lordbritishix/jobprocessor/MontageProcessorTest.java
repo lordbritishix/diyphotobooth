@@ -5,6 +5,8 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.UUID;
+
+import com.diyphotobooth.lordbritishix.jobprocessor.montage.DefaultMontageMaker;
 import org.apache.commons.io.FileUtils;
 import org.gm4java.engine.GMConnection;
 import org.gm4java.engine.GMServiceException;
@@ -30,7 +32,7 @@ public class MontageProcessorTest {
     private MontageProcessor fixture;
 
     @Mock
-    private MontageMaker montageMaker;
+    private DefaultMontageMaker montageMaker;
 
     @Mock
     private SessionUtils sessionUtils;

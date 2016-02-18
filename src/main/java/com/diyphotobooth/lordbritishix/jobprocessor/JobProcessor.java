@@ -87,9 +87,15 @@ public class JobProcessor {
         List<Session> unprocessedSessions = Lists.newArrayList();
 
         while (files.hasNext()) {
-            Session session = Session.fromJsonInFile(files.next());
-            if (isSessionUnprocessed(session)) {
-                unprocessedSessions.add(session);
+            File file = files.next();
+            try {
+                Session session = Session.fromJsonInFile(file);
+                if (isSessionUnprocessed(session)) {
+                    unprocessedSessions.add(session);
+                }
+            }
+            catch(Exception e) {
+                log.error("Unable to process the file: {}", file.toString(), e);
             }
         }
 

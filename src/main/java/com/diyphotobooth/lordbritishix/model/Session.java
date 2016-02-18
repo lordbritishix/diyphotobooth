@@ -1,5 +1,19 @@
 package com.diyphotobooth.lordbritishix.model;
 
+import com.diyphotobooth.lordbritishix.model.converter.SessionDeserializer;
+import com.diyphotobooth.lordbritishix.model.converter.SessionSerializer;
+import com.google.common.collect.Maps;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
+import lombok.Data;
+import lombok.EqualsAndHashCode;
+import lombok.ToString;
+import org.apache.commons.io.IOUtils;
+import org.apache.commons.io.output.ByteArrayOutputStream;
+import org.codehaus.jackson.map.ObjectMapper;
+import org.codehaus.jackson.map.annotate.JsonDeserialize;
+import org.codehaus.jackson.map.annotate.JsonSerialize;
+
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
@@ -12,20 +26,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 import java.util.stream.Collectors;
-import org.apache.commons.io.IOUtils;
-import org.apache.commons.io.output.ByteArrayOutputStream;
-import org.codehaus.jackson.map.ObjectMapper;
-import org.codehaus.jackson.map.annotate.JsonDeserialize;
-import org.codehaus.jackson.map.annotate.JsonSerialize;
-import com.diyphotobooth.lordbritishix.model.converter.SessionDeserializer;
-import com.diyphotobooth.lordbritishix.model.converter.SessionSerializer;
-import com.google.common.collect.Maps;
-
-import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.Data;
-import lombok.EqualsAndHashCode;
-import lombok.ToString;
 
 /**
  * Session represents an active photo shoot session where:

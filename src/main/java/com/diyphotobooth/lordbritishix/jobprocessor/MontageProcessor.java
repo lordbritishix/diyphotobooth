@@ -1,26 +1,26 @@
 package com.diyphotobooth.lordbritishix.jobprocessor;
 
-import java.nio.file.Path;
-import java.nio.file.Paths;
-import java.util.function.Consumer;
-import com.diyphotobooth.lordbritishix.jobprocessor.montage.MontageMaker;
+import com.diyphotobooth.lordbritishix.jobprocessor.montage.DefaultMontageMaker;
 import com.diyphotobooth.lordbritishix.model.Session;
 import com.diyphotobooth.lordbritishix.model.SessionUtils;
 import com.google.inject.Inject;
 import com.google.inject.name.Named;
-
 import lombok.extern.slf4j.Slf4j;
+
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.util.function.Consumer;
 
 @Slf4j
 public class MontageProcessor implements Consumer<Session> {
     private final SessionUtils sessionUtils;
     private final Path snapshotDir;
-    private final MontageMaker montageMaker;
+    private final DefaultMontageMaker montageMaker;
 
     @Inject
     public MontageProcessor(SessionUtils sessionUtils,
                             @Named("snapshot.folder") String snapshotDir,
-                            MontageMaker montageMaker) {
+                            DefaultMontageMaker montageMaker) {
         this.sessionUtils = sessionUtils;
         this.snapshotDir = Paths.get(snapshotDir);
         this.montageMaker = montageMaker;
