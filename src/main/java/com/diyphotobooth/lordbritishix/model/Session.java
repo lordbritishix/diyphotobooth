@@ -44,10 +44,11 @@ public class Session {
     public enum State {
         TAKING_PHOTO,
         DONE_TAKING_PHOTO,
-        PREPARING_MONTAGE,
-        PRINTING,
+        DONE_COMPOSING_MONTAGE,
+        DONE_PRINTING,
         DONE,
-        ERROR
+        ERROR,
+        RETRY
     }
 
     private final UUID sessionId;

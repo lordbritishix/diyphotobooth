@@ -28,6 +28,8 @@ public class MontageProcessor implements Consumer<Session> {
 
     @Override
     public void accept(Session session) {
+        log.debug("Session being processed by the MontageProcessor: {} ", session.toString());
+
         if (!isSessionValid(session)) {
             log.error("MontageProcessor is unable to process this session: {}", session.toString());
             return;
@@ -37,15 +39,14 @@ public class MontageProcessor implements Consumer<Session> {
 
         if (montage != null) {
             session.setMontage(montage);
-            sessionUtils.updateSessionStateAndPersistQuietly(snapshotDir, session, Session.State.PREPARING_MONTAGE);
+            sessionUtils.updateSessionStateAndPersistQuietly(snapshotDir, session, Session.State.DONE_COMPOSING_MONTAGE);
+            log.debug("MontageProcessor success for session: {} ", session.toString());
         }
         else {
             log.error("Unable to compose the montage for session: {}", session.toString());
             //Probably a permanent error - so set to error so we don't reprocess it again
             sessionUtils.updateSessionStateAndPersistQuietly(snapshotDir, session, Session.State.ERROR);
         }
-
-        log.debug("Session being processed by the MontageProcessor: {} ", session.toString());
     }
 
     private boolean isSessionValid(Session session) {

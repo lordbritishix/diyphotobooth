@@ -1,5 +1,8 @@
 package com.diyphotobooth.lordbritishix;
 
+import java.io.IOException;
+import java.nio.file.Paths;
+import java.util.concurrent.ExecutionException;
 import com.diyphotobooth.lordbritishix.guice.GuiceModule;
 import com.diyphotobooth.lordbritishix.jobprocessor.DoneProcessor;
 import com.diyphotobooth.lordbritishix.jobprocessor.JobProcessor;
@@ -11,12 +14,11 @@ import com.diyphotobooth.lordbritishix.utils.StageManager;
 import com.google.common.collect.ImmutableList;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
+
 import javafx.application.Application;
 import javafx.scene.image.Image;
 import javafx.stage.Stage;
 import lombok.extern.slf4j.Slf4j;
-
-import java.nio.file.Paths;
 
 @Slf4j
 public class App extends Application {
@@ -42,17 +44,30 @@ public class App extends Application {
         MontageProcessor montageProcessor = injector.getInstance(MontageProcessor.class);
         PrintProcessor printProcessor = injector.getInstance(PrintProcessor.class);
         DoneProcessor doneProcessor = injector.getInstance(DoneProcessor.class);
-        processor.start(ImmutableList.of(montageProcessor, printProcessor, doneProcessor));
+        StatsCounter counter = injector.getInstance(StatsCounter.class);
 
+        processor.start(ImmutableList.of(montageProcessor, printProcessor, doneProcessor));
 
         primaryStage.setOnCloseRequest(p -> {
             log.info("Shutting down");
             BaseScene scene = stageManager.getCurrentScene();
+
             try {
                 scene.getController().shutdown();
-                processor.stop();
             } catch (Exception e) {
-                log.error("Unable to shutdown controller", e);
+                log.error("Unable to shutdown the controller", e);
+            }
+
+            try {
+                processor.stop();
+            } catch (ExecutionException | InterruptedException e) {
+                log.error("Unable to stop the Job Processor", e);
+            }
+
+            try {
+                counter.dump();
+            } catch (IOException e) {
+                log.error("Unable to dump the stats", e);
             }
         });
     }

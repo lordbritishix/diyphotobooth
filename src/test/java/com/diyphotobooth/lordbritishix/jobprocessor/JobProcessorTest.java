@@ -18,7 +18,11 @@ import org.apache.commons.io.FileUtils;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
+import org.junit.runner.RunWith;
+import org.mockito.Mock;
+import org.mockito.runners.MockitoJUnitRunner;
 import com.diyphotobooth.lordbritishix.model.Session;
+import com.diyphotobooth.lordbritishix.model.SessionUtils;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
@@ -26,8 +30,12 @@ import com.google.common.collect.Maps;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.core.Is.is;
 
+@RunWith(MockitoJUnitRunner.class)
 public class JobProcessorTest {
     private Path snapshotFolder;
+
+    @Mock
+    private SessionUtils sessionUtils;
 
     @Before
     public void setup() throws IOException {
@@ -43,7 +51,7 @@ public class JobProcessorTest {
     public void queueSessionProcessesQueuedSessionAfterAWhile() throws InterruptedException, ExecutionException {
         Session session = Session.builder().sessionId(UUID.randomUUID()).state(Session.State.DONE_TAKING_PHOTO).build();
         CountDownLatch latch = new CountDownLatch(1);
-        JobProcessor fixture = new JobProcessor(snapshotFolder.toString());
+        JobProcessor fixture = new JobProcessor(snapshotFolder.toString(), sessionUtils);
 
         fixture.start(ImmutableList.of(p -> {
             assertThat(session, is(p));
@@ -70,7 +78,7 @@ public class JobProcessorTest {
         }
 
         CountDownLatch latch = new CountDownLatch(count * 2);
-        JobProcessor fixture = new JobProcessor(snapshotFolder.toString());
+        JobProcessor fixture = new JobProcessor(snapshotFolder.toString(), sessionUtils);
 
         fixture.start(ImmutableList.of(p -> {
             processedSessions1.add(p);
@@ -92,19 +100,21 @@ public class JobProcessorTest {
     @Test
     public void getUnprocessedSessionsReturnsOnlyUnprocessedSessions() throws InterruptedException, ExecutionException, IOException {
         createSessions(5, snapshotFolder, Session.State.DONE_TAKING_PHOTO);
-        createSessions(5, snapshotFolder, Session.State.PREPARING_MONTAGE);
+        createSessions(5, snapshotFolder, Session.State.DONE_COMPOSING_MONTAGE);
         createSessions(5, snapshotFolder, Session.State.DONE);
         createSessions(5, snapshotFolder, Session.State.TAKING_PHOTO);
         createSessions(5, snapshotFolder, Session.State.ERROR);
-        createSessions(5, snapshotFolder, Session.State.PRINTING);
+        createSessions(5, snapshotFolder, Session.State.DONE_PRINTING);
+        createSessions(5, snapshotFolder, Session.State.RETRY);
 
-        JobProcessor fixture = new JobProcessor(snapshotFolder.toString());
+        JobProcessor fixture = new JobProcessor(snapshotFolder.toString(), sessionUtils);
 
         List<Session> sessions = fixture.getUnprocessedSessionsFromDirectory(snapshotFolder);
-        assertThat(sessions.size(), is(15));
-        assertThat(sessions.stream().filter(p -> p.getState() == Session.State.PREPARING_MONTAGE).collect(Collectors.toList()).size(), is(5));
+        assertThat(sessions.size(), is(20));
+        assertThat(sessions.stream().filter(p -> p.getState() == Session.State.DONE_COMPOSING_MONTAGE).collect(Collectors.toList()).size(), is(5));
         assertThat(sessions.stream().filter(p -> p.getState() == Session.State.DONE_TAKING_PHOTO).collect(Collectors.toList()).size(), is(5));
-        assertThat(sessions.stream().filter(p -> p.getState() == Session.State.PRINTING).collect(Collectors.toList()).size(), is(5));
+        assertThat(sessions.stream().filter(p -> p.getState() == Session.State.DONE_PRINTING).collect(Collectors.toList()).size(), is(5));
+        assertThat(sessions.stream().filter(p -> p.getState() == Session.State.RETRY).collect(Collectors.toList()).size(), is(5));
     }
 
     @Test
@@ -114,7 +124,7 @@ public class JobProcessorTest {
         List<Session> processedSessions = Lists.newArrayList();
 
         CountDownLatch latch = new CountDownLatch(count);
-        JobProcessor fixture = new JobProcessor(snapshotFolder.toString());
+        JobProcessor fixture = new JobProcessor(snapshotFolder.toString(), sessionUtils);
 
         fixture.start(ImmutableList.of(p -> {
             latch.countDown();

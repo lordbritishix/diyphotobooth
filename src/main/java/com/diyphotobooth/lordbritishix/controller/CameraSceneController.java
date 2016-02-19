@@ -16,6 +16,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.function.Consumer;
 import java.util.function.Function;
+import com.diyphotobooth.lordbritishix.StatsCounter;
 import com.diyphotobooth.lordbritishix.client.IpCameraException;
 import com.diyphotobooth.lordbritishix.client.IpCameraHttpClient;
 import com.diyphotobooth.lordbritishix.client.MJpegStreamBufferListener;
@@ -72,6 +73,7 @@ public class CameraSceneController extends BaseController implements MJpegStream
     private final SessionUtils sessionUtils;
     private final JobProcessor jobProcessor;
     private final int photoCount;
+    private final StatsCounter statsCounter;
 
     @Inject
     public CameraSceneController(StageManager stageManager,
@@ -81,7 +83,8 @@ public class CameraSceneController extends BaseController implements MJpegStream
                                  @Named("snapshot.folder") String snapshotFolder,
                                  SessionUtils sessionUtils,
                                  JobProcessor jobProcessor,
-                                 @Named("photo.count") int photoCount) {
+                                 @Named("photo.count") int photoCount,
+                                 StatsCounter statsCounter) {
         super(stageManager);
         this.client = client;
         this.state = State.STOPPED;
@@ -92,6 +95,7 @@ public class CameraSceneController extends BaseController implements MJpegStream
         this.sessionUtils = sessionUtils;
         this.jobProcessor = jobProcessor;
         this.photoCount = photoCount;
+        this.statsCounter = statsCounter;
     }
 
     @Override
@@ -256,6 +260,7 @@ public class CameraSceneController extends BaseController implements MJpegStream
                     String imageName = "";
                     try(InputStream is = client.takePhoto(false)) {
                         imageName = sessionUtils.writeImageToCurrentSession(session, is, snapshotFolder);
+                        statsCounter.incrementPicturesTaken();
                         if (!session.isSessionFinished()) {
                             Platform.runLater(() -> ((CameraScene) getScene()).setCounterValue(
                                     session.getNumberOfPhotosAlreadyTaken(), photoCount));
@@ -299,6 +304,7 @@ public class CameraSceneController extends BaseController implements MJpegStream
             Session session;
             try {
                 session = sessionUtils.newSession(photoCount, snapshotFolder);
+                statsCounter.incrementSessionsStarted();
                 log.info("Session started: {}, {}", session.getSessionId(), session.getSessionDate().toString());
             } catch (Exception e) {
                 throw new RuntimeException("Unable to start the session", e);

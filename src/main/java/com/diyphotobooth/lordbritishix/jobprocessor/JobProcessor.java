@@ -1,16 +1,5 @@
 package com.diyphotobooth.lordbritishix.jobprocessor;
 
-import com.diyphotobooth.lordbritishix.model.Session;
-import com.google.common.annotations.VisibleForTesting;
-import com.google.common.collect.Lists;
-import com.google.common.collect.Queues;
-import com.google.inject.Inject;
-import com.google.inject.Singleton;
-import com.google.inject.name.Named;
-import lombok.Data;
-import lombok.extern.slf4j.Slf4j;
-import org.apache.commons.io.FileUtils;
-
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.Path;
@@ -24,6 +13,18 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 import java.util.function.Consumer;
+import org.apache.commons.io.FileUtils;
+import com.diyphotobooth.lordbritishix.model.Session;
+import com.diyphotobooth.lordbritishix.model.SessionUtils;
+import com.google.common.annotations.VisibleForTesting;
+import com.google.common.collect.Lists;
+import com.google.common.collect.Queues;
+import com.google.inject.Inject;
+import com.google.inject.Singleton;
+import com.google.inject.name.Named;
+
+import lombok.Data;
+import lombok.extern.slf4j.Slf4j;
 
 /**
  * Job Processor is responsible for:
@@ -36,7 +37,7 @@ import java.util.function.Consumer;
  * 1. Scanning the snapshotFolder for unprinted sessions
  * 2. Real-time, using queueJob
  *
- * Once the Job Processor is stopped, it can never be restarted again
+ * Once the Job Processor is stopped, it can never be restarted again.
  */
 @Slf4j
 @Singleton
@@ -45,18 +46,30 @@ public class JobProcessor {
     private final BlockingQueue<Session> jobs = Queues.newLinkedBlockingDeque();
     private final JobProcessorStopper stopper;
     private final ExecutorService executorService;
+    private final SessionUtils sessionUtils;
 
     @Inject
-    public JobProcessor(@Named("snapshot.folder") String snapshotFolder) {
+    public JobProcessor(
+            @Named("snapshot.folder") String snapshotFolder,
+            SessionUtils sessionUtils) {
         this.snapshotFolder = Paths.get(snapshotFolder);
         this.stopper = new JobProcessorStopper();
         this.executorService = Executors.newSingleThreadExecutor();
+        this.sessionUtils = sessionUtils;
     }
 
     public void start(List<Consumer<Session>> processingPipeline) throws InterruptedException {
         CountDownLatch latch = new CountDownLatch(1);
         Future<Void> future = executorService.submit(() -> {
             List<Session> previousUnprocessedSessions = getUnprocessedSessionsFromDirectory(snapshotFolder);
+
+            //Reset to initial state so it can be reprocessed again cleanly
+            previousUnprocessedSessions.stream().forEach(p -> {
+                log.debug("Attempting to reprocess previous session: {}", p.toString());
+                p.setState(Session.State.DONE_TAKING_PHOTO);
+                sessionUtils.updateSessionStateAndPersistQuietly(snapshotFolder, p, Session.State.DONE_TAKING_PHOTO);
+            });
+
             previousUnprocessedSessions.forEach(p -> log.debug("Attempting to reprocess previous session: {}", p.toString()));
             jobs.addAll(previousUnprocessedSessions);
 
@@ -115,9 +128,14 @@ public class JobProcessor {
     }
 
     private boolean isSessionUnprocessed(Session session) {
-        return session.getState() == Session.State.DONE_TAKING_PHOTO ||
-                session.getState() == Session.State.PREPARING_MONTAGE ||
-                session.getState() == Session.State.PRINTING;
+        return
+                //If we stop at the middle, we still want to be able to recover jobs that were in the middle of processing
+                session.getState() == Session.State.DONE_TAKING_PHOTO ||
+                session.getState() == Session.State.DONE_COMPOSING_MONTAGE ||
+                session.getState() == Session.State.DONE_PRINTING ||
+
+                //If it's in a retry state, let's do it again
+                session.getState() == Session.State.RETRY;
     }
 
     @Data

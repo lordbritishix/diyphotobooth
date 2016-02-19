@@ -10,6 +10,7 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.Mock;
 import org.mockito.runners.MockitoJUnitRunner;
+import com.diyphotobooth.lordbritishix.StatsCounter;
 import com.diyphotobooth.lordbritishix.client.IpCameraException;
 import com.diyphotobooth.lordbritishix.client.IpCameraHttpClient;
 import com.diyphotobooth.lordbritishix.client.MJpegStreamBufferer;
@@ -39,11 +40,14 @@ public class CameraSceneControllerTest {
     @Mock
     private JobProcessor jobProcessor;
 
+    @Mock
+    private StatsCounter statsCounter;
+
     private CameraSceneController fixture;
 
     @Before
     public void setup() {
-        fixture = new CameraSceneController(stageManager, client, 5, 1, "", sessionUtils, jobProcessor, 4);
+        fixture = new CameraSceneController(stageManager, client, 5, 1, "", sessionUtils, jobProcessor, 4, statsCounter);
     }
 
     @Test

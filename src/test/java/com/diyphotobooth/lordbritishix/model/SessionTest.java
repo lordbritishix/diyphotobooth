@@ -29,7 +29,7 @@ public class SessionTest {
         Session session = new Session(2);
         session.setPrinted(true);
         session.setMontage(Paths.get("/temp"));
-        session.setState(Session.State.PREPARING_MONTAGE);
+        session.setState(Session.State.DONE_COMPOSING_MONTAGE);
 
         session.getImageMap().put(1, "1.jpg");
         session.nextPhoto();
