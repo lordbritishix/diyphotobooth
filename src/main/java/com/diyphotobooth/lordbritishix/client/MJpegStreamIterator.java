@@ -1,15 +1,15 @@
 package com.diyphotobooth.lordbritishix.client;
 
-import com.google.common.annotations.VisibleForTesting;
-import com.google.common.collect.PeekingIterator;
-import lombok.Data;
-
 import java.io.BufferedInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
 import java.util.Iterator;
+import com.google.common.annotations.VisibleForTesting;
+import com.google.common.collect.PeekingIterator;
+
+import lombok.Data;
 
 /**
  * Reads the mjpeg stream payloads using an iterator interface. The format of an mjpeg stream is:
@@ -23,6 +23,8 @@ public class MJpegStreamIterator implements Iterator<byte[]> {
     private PeekingIterator<byte[]> iterator;
     private InputStream stream;
     private final MJpegStreamHeader header;
+    private final ByteArrayOutputStream charBaos = new ByteArrayOutputStream();
+    private final ByteArrayOutputStream lineBaos = new ByteArrayOutputStream();
 
     public MJpegStreamIterator(InputStream is) {
         header = new MJpegStreamHeader();
@@ -42,23 +44,23 @@ public class MJpegStreamIterator implements Iterator<byte[]> {
     @VisibleForTesting
     String readLine() throws IOException {
         int ch;
-        ByteArrayOutputStream baos = new ByteArrayOutputStream();
+        lineBaos.reset();
         while ((ch = stream.read()) != -1) {
             if (ch == '\r') {
                 int ch1 = stream.read();
 
                 if (ch1 == '\n') {
-                    return baos.toString(StandardCharsets.UTF_8.toString());
+                    return lineBaos.toString(StandardCharsets.UTF_8.toString());
                 }
 
-                baos.write(ch);
-                baos.write(ch1);
+                lineBaos.write(ch);
+                lineBaos.write(ch1);
             } else {
-                baos.write(ch);
+                lineBaos.write(ch);
             }
         }
 
-        return baos.size() <= 0 ? null : baos.toString(StandardCharsets.UTF_8.name());
+        return lineBaos.size() <= 0 ? null : lineBaos.toString(StandardCharsets.UTF_8.name());
     }
 
     /**
@@ -113,6 +115,8 @@ public class MJpegStreamIterator implements Iterator<byte[]> {
     @Override
     public byte[] next() {
         if (!hasNext()) {
+            charBaos.reset();
+            lineBaos.reset();
             throw new IllegalStateException("End of stream reached");
         }
 
@@ -120,16 +124,17 @@ public class MJpegStreamIterator implements Iterator<byte[]> {
         try {
             streamHeader = readHeader();
 
-            ByteArrayOutputStream baos = new ByteArrayOutputStream();
+            charBaos.reset();
+
             int ch;
             while ((ch = stream.read()) != -1) {
-                baos.write(ch);
-                if (baos.size() >= streamHeader.contentLength) {
+                charBaos.write(ch);
+                if (charBaos.size() >= streamHeader.contentLength) {
                     break;
                 }
             }
 
-            return baos.toByteArray();
+            return charBaos.toByteArray();
         } catch (IOException e) {
             return new byte[0];
         }

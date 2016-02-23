@@ -4,6 +4,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.util.List;
 import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.atomic.AtomicInteger;
 import org.apache.commons.lang3.tuple.Pair;
 import org.junit.Test;
 import com.diyphotobooth.lordbritishix.TestUtils;
@@ -21,6 +22,8 @@ public class MJpegStreamBuffererTest {
 
         MJpegStreamBufferer buffer = new MJpegStreamBufferer(5);
 
+        AtomicInteger discardedCount = new AtomicInteger(0);
+
         buffer.start(new MJpegStreamBufferListener() {
             @Override
             public void stopped() {
@@ -34,16 +37,18 @@ public class MJpegStreamBuffererTest {
 
             @Override
             public void streamDiscarded(byte[] stream) {
+                discardedCount.incrementAndGet();
             }
         }, new MJpegStreamIterator(stream.getLeft()));
 
         latch.await();
 
         for (int x = 0; x < 5; ++x) {
-            assertThat(buffer.get(), is(stream.getRight().get(x)));
+            assertThat(buffer.get(), is(stream.getRight().get(x + 95)));
         }
 
         assertNull(buffer.get());
+        assertThat(discardedCount.get(), is(95));
     }
 
     @Test

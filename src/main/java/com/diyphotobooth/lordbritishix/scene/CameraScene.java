@@ -1,19 +1,19 @@
 package com.diyphotobooth.lordbritishix.scene;
 
+import java.io.IOException;
+import java.io.InputStream;
+import java.util.function.Consumer;
 import com.diyphotobooth.lordbritishix.controller.CameraSceneController;
 import com.diyphotobooth.lordbritishix.utils.StageManager;
 import com.google.inject.Inject;
 import com.google.inject.name.Named;
+
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
 import javafx.scene.layout.StackPane;
 import lombok.extern.slf4j.Slf4j;
-
-import java.io.IOException;
-import java.io.InputStream;
-import java.util.function.Consumer;
 
 /**
  * Camera Scene is responsible for:
@@ -26,6 +26,7 @@ public class CameraScene extends BaseScene {
     private final StageManager stageManager;
     private final Counter counter;
     private final Countdown countdown;
+    private boolean isViewFinderOff = false;
 
     @Inject
     public CameraScene(CameraSceneController controller,
@@ -70,13 +71,18 @@ public class CameraScene extends BaseScene {
     }
 
     public void setCameraImage(InputStream is) {
-        imageView.fitWidthProperty().bind(stageManager.getCurrentStage().widthProperty());
-        imageView.fitHeightProperty().bind(stageManager.getCurrentStage().heightProperty());
+        if (isViewFinderOff) {
+            imageView.fitWidthProperty().bind(stageManager.getCurrentStage().widthProperty());
+            imageView.fitHeightProperty().bind(stageManager.getCurrentStage().heightProperty());
+            isViewFinderOff = false;
+        }
+
         imageView.setImage(new Image(is));
     }
 
     public void showRetry() {
         try(InputStream is = CameraSceneController.class.getClass().getResourceAsStream("/img/retry.png")) {
+            isViewFinderOff = true;
             imageView.fitWidthProperty().unbind();
             imageView.fitHeightProperty().unbind();
             imageView.setFitWidth(100.0d);
@@ -89,6 +95,7 @@ public class CameraScene extends BaseScene {
 
     public void showCheckmark() {
         try(InputStream is = CameraSceneController.class.getClass().getResourceAsStream("/img/checkmark.png")) {
+            isViewFinderOff = true;
             imageView.fitWidthProperty().unbind();
             imageView.fitHeightProperty().unbind();
             imageView.setFitWidth(100.0d);
@@ -101,6 +108,7 @@ public class CameraScene extends BaseScene {
 
     public void showWrong() {
         try(InputStream is = CameraSceneController.class.getClass().getResourceAsStream("/img/wrong.png")) {
+            isViewFinderOff = true;
             imageView.fitWidthProperty().unbind();
             imageView.fitHeightProperty().unbind();
             imageView.setFitWidth(100.0d);
@@ -114,6 +122,7 @@ public class CameraScene extends BaseScene {
 
     public void showLoading() {
         try(InputStream is = CameraSceneController.class.getClass().getResourceAsStream("/img/hourglass.gif")) {
+            isViewFinderOff = true;
             imageView.fitWidthProperty().unbind();
             imageView.fitHeightProperty().unbind();
             imageView.setFitWidth(100.0d);

@@ -122,8 +122,8 @@ public class MontageProcessorTest {
         verify(sessionUtils, never()).updateSessionStateAndPersistQuietly(any(Path.class), any(Session.class), any(Session.State.class));
     }
 
-    @Test
-    public void real() throws IOException, PrintException {
+//    @Test
+//    public void real() throws IOException, PrintException {
 //        Session session = Session.builder()
 //                .state(Session.State.DONE_TAKING_PHOTO)
 //                .imageMap(
@@ -142,5 +142,5 @@ public class MontageProcessorTest {
 //
 //        MontagePrinter printer = new MontagePrinter();
 //        printer.print(Paths.get("/home/jim.quitevis/tmp/montage.png"));
-    }
+//    }
 }

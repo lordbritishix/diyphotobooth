@@ -1,12 +1,11 @@
 package com.diyphotobooth.lordbritishix.client;
 
-import com.google.common.collect.Queues;
-
 import java.util.Deque;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReadWriteLock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
+import com.google.common.collect.Queues;
 
 /**
  * Buffers MJpeg streams. If the buffered streams have reached capacity, the incoming stream is discarded.
@@ -50,7 +49,10 @@ public class MJpegStreamBufferer {
                         }
                     }
                     else {
-                        listener.streamDiscarded(iterator.next());
+                        byte[] data = iterator.next();
+                        byte[] discarded = buffer.removeFirst();
+                        buffer.add(data);
+                        listener.streamDiscarded(discarded);
                     }
                 }
                 catch(Exception e) {
