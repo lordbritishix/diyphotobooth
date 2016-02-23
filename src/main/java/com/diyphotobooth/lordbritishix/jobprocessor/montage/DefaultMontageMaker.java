@@ -38,8 +38,10 @@ public class DefaultMontageMaker implements MontageMaker {
     @Override
     public Path apply(Session session, Path sessionDir) {
         Path artPath = Paths.get(resourcesFolder.toString(), "defaultArt.png");
+        Path patternPath = Paths.get(resourcesFolder.toString(), "pattern.jpg");
+
         Path imagePath = Paths.get(sessionDir.toString(), "tmp.grid.png");
-        Path montagePath = Paths.get(sessionDir.toString(), "montage.png");
+        Path montagePath = Paths.get(sessionDir.toString(), "montage.jpg");
 
         GMConnection connection = null;
         try {
@@ -69,6 +71,8 @@ public class DefaultMontageMaker implements MontageMaker {
             gridCommand.add("montage");
             gridCommand.add("-geometry");
             gridCommand.add("740x590+5+5");
+            gridCommand.add("-texture");
+            gridCommand.add(patternPath.toString());
             gridCommand.add("-label");
             gridCommand.add("");
             gridCommand.add("-tile");

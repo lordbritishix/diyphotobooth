@@ -30,9 +30,14 @@ public class App extends Application {
 
     @Override
     public void start(Stage primaryStage) throws Exception {
+        if (getParameters().getRaw().size() <= 0) {
+            log.error("Must specify properties file as the first parameter.");
+            return;
+        }
+
         Injector injector = Guice.createInjector(
                 new GuiceModule(primaryStage,
-                        Paths.get("/home/lordbritishix/src/diyphotobooth/settings/dashboard.properties")));
+                        Paths.get(getParameters().getRaw().get(0))));
 
         stageManager = injector.getInstance(StageManager.class);
         primaryStage.setTitle("Jim's DIY Photo Booth");

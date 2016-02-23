@@ -1,5 +1,7 @@
 package com.diyphotobooth.lordbritishix;
 
+import com.google.inject.Singleton;
+
 import java.io.BufferedWriter;
 import java.io.FileOutputStream;
 import java.io.IOException;
@@ -10,7 +12,6 @@ import java.nio.file.Paths;
 import java.time.LocalDateTime;
 import java.time.ZoneOffset;
 import java.util.concurrent.atomic.AtomicInteger;
-import com.google.inject.Singleton;
 
 @Singleton
 public class StatsCounter {
@@ -19,6 +20,7 @@ public class StatsCounter {
     private AtomicInteger sessionsStarted = new AtomicInteger();
     private AtomicInteger sessionsToBeRetried = new AtomicInteger();
     private AtomicInteger sessionsThatEncounteredError = new AtomicInteger();
+    private AtomicInteger discardedFrames = new AtomicInteger();
 
     public int incrementPicturesTaken() {
         return picturesTaken.incrementAndGet();
@@ -36,9 +38,12 @@ public class StatsCounter {
         return sessionsThatEncounteredError.incrementAndGet();
     }
 
-
     public int incrementSessionsCompleted() {
         return sessionsCompleted.incrementAndGet();
+    }
+
+    public int incrementDiscardedFrames() {
+        return discardedFrames.incrementAndGet();
     }
 
     public void dump() throws IOException {
@@ -56,6 +61,8 @@ public class StatsCounter {
             writer.write("Sessions To Be Retried: " + sessionsToBeRetried.get());
             writer.newLine();
             writer.write("Sessions To That Encountered Errors: " + sessionsThatEncounteredError.get());
+            writer.newLine();
+            writer.write("Discarded Franes: " + discardedFrames.get());
         }
     }
 }

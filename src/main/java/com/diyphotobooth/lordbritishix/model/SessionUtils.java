@@ -1,5 +1,8 @@
 package com.diyphotobooth.lordbritishix.model;
 
+import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.io.IOUtils;
+
 import java.io.ByteArrayInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
@@ -10,9 +13,6 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.StandardCopyOption;
-import org.apache.commons.io.IOUtils;
-
-import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
 /**
@@ -71,7 +71,7 @@ public class SessionUtils {
 
         try (OutputStream os = new FileOutputStream(tempFile.toFile())) {
             IOUtils.copy(new ByteArrayInputStream(session.toJson().getBytes(StandardCharsets.UTF_8)), os);
-            Files.move(tempFile, metadata, StandardCopyOption.REPLACE_EXISTING);
         }
+        Files.move(tempFile, metadata, StandardCopyOption.REPLACE_EXISTING);
     }
 }

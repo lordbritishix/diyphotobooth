@@ -22,7 +22,7 @@ public class MontagePrinter {
     public void print(Path filename) throws PrintException, IOException {
         PrintRequestAttributeSet attributeSet = new HashPrintRequestAttributeSet();
         attributeSet.add(new Copies(1));
-        PrintService[] printServices = PrintServiceLookup.lookupPrintServices(DocFlavor.INPUT_STREAM.PNG, attributeSet);
+        PrintService[] printServices = PrintServiceLookup.lookupPrintServices(DocFlavor.INPUT_STREAM.JPEG, attributeSet);
 
         if (printServices.length <= 0) {
             throw new PrintException("No printer services available");
@@ -32,7 +32,7 @@ public class MontagePrinter {
         DocPrintJob job = printService.createPrintJob();
 
         try (InputStream is = new FileInputStream(filename.toFile())) {
-            Doc doc = new SimpleDoc(is, DocFlavor.INPUT_STREAM.PNG, null);
+            Doc doc = new SimpleDoc(is, DocFlavor.INPUT_STREAM.JPEG, null);
             job.print(doc, attributeSet);
         }
     }

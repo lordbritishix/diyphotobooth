@@ -1,7 +1,20 @@
 package com.diyphotobooth.lordbritishix.jobprocessor;
 
+import com.diyphotobooth.lordbritishix.model.Session;
+import com.diyphotobooth.lordbritishix.model.SessionUtils;
+import com.google.common.annotations.VisibleForTesting;
+import com.google.common.collect.Lists;
+import com.google.common.collect.Queues;
+import com.google.inject.Inject;
+import com.google.inject.Singleton;
+import com.google.inject.name.Named;
+import lombok.Data;
+import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.io.FileUtils;
+
 import java.io.File;
 import java.io.IOException;
+import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.Iterator;
@@ -13,18 +26,6 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 import java.util.function.Consumer;
-import org.apache.commons.io.FileUtils;
-import com.diyphotobooth.lordbritishix.model.Session;
-import com.diyphotobooth.lordbritishix.model.SessionUtils;
-import com.google.common.annotations.VisibleForTesting;
-import com.google.common.collect.Lists;
-import com.google.common.collect.Queues;
-import com.google.inject.Inject;
-import com.google.inject.Singleton;
-import com.google.inject.name.Named;
-
-import lombok.Data;
-import lombok.extern.slf4j.Slf4j;
 
 /**
  * Job Processor is responsible for:
@@ -58,8 +59,15 @@ public class JobProcessor {
         this.sessionUtils = sessionUtils;
     }
 
-    public void start(List<Consumer<Session>> processingPipeline) throws InterruptedException {
+    private void createSnapshotFolderIfNotExist() throws IOException {
+        if (!Files.exists(snapshotFolder)) {
+            Files.createDirectories(snapshotFolder);
+        }
+    }
+
+    public void start(List<Consumer<Session>> processingPipeline) throws InterruptedException, IOException {
         CountDownLatch latch = new CountDownLatch(1);
+        createSnapshotFolderIfNotExist();
         Future<Void> future = executorService.submit(() -> {
             List<Session> previousUnprocessedSessions = getUnprocessedSessionsFromDirectory(snapshotFolder);
 

@@ -48,7 +48,7 @@ public class JobProcessorTest {
     }
 
     @Test
-    public void queueSessionProcessesQueuedSessionAfterAWhile() throws InterruptedException, ExecutionException {
+    public void queueSessionProcessesQueuedSessionAfterAWhile() throws InterruptedException, ExecutionException, IOException {
         Session session = Session.builder().sessionId(UUID.randomUUID()).state(Session.State.DONE_TAKING_PHOTO).build();
         CountDownLatch latch = new CountDownLatch(1);
         JobProcessor fixture = new JobProcessor(snapshotFolder.toString(), sessionUtils);
@@ -66,7 +66,7 @@ public class JobProcessorTest {
     }
 
     @Test
-    public void queueManySessionProcessesAllQueuedSessions() throws InterruptedException, ExecutionException {
+    public void queueManySessionProcessesAllQueuedSessions() throws InterruptedException, ExecutionException, IOException {
         List<Session> sessions = Lists.newArrayList();
         List<Session> processedSessions1 = Lists.newArrayList();
         List<Session> processedSessions2 = Lists.newArrayList();

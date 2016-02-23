@@ -1,21 +1,5 @@
 package com.diyphotobooth.lordbritishix.controller;
 
-import java.io.ByteArrayInputStream;
-import java.io.IOException;
-import java.io.InputStream;
-import java.nio.file.Path;
-import java.nio.file.Paths;
-import java.util.Optional;
-import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.CountDownLatch;
-import java.util.concurrent.ExecutionException;
-import java.util.concurrent.Executors;
-import java.util.concurrent.ScheduledExecutorService;
-import java.util.concurrent.TimeUnit;
-import java.util.concurrent.atomic.AtomicBoolean;
-import java.util.concurrent.atomic.AtomicLong;
-import java.util.function.Consumer;
-import java.util.function.Function;
 import com.diyphotobooth.lordbritishix.StatsCounter;
 import com.diyphotobooth.lordbritishix.client.IpCameraException;
 import com.diyphotobooth.lordbritishix.client.IpCameraHttpClient;
@@ -31,13 +15,28 @@ import com.diyphotobooth.lordbritishix.utils.StageManager;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.inject.Inject;
 import com.google.inject.name.Named;
-
 import javafx.application.Platform;
 import javafx.scene.Node;
 import javafx.scene.input.MouseEvent;
 import javafx.scene.media.AudioClip;
 import lombok.Data;
 import lombok.extern.slf4j.Slf4j;
+
+import java.io.ByteArrayInputStream;
+import java.io.IOException;
+import java.io.InputStream;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.util.Optional;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.function.Consumer;
+import java.util.function.Function;
 
 /**
  * Controls the Camera Scene
@@ -68,7 +67,6 @@ public class CameraSceneController extends BaseController implements MJpegStream
     private final int countdownLengthInSeconds;
     private volatile State state;
     private volatile Optional<ViewFinderStopper> viewFinderStopper;
-    private final AtomicLong discardedCount = new AtomicLong();
     private final Path snapshotFolder;
     private final SessionUtils sessionUtils;
     private final JobProcessor jobProcessor;
@@ -108,8 +106,7 @@ public class CameraSceneController extends BaseController implements MJpegStream
 
     @Override
     public void streamDiscarded(byte[] stream) {
-        discardedCount.addAndGet(1);
-        log.debug("Stream discarded: {}", discardedCount.get());
+        statsCounter.incrementDiscardedFrames();
     }
 
     @Override
