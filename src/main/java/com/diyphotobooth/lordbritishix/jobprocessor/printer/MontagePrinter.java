@@ -13,7 +13,8 @@ import javax.print.PrintServiceLookup;
 import javax.print.SimpleDoc;
 import javax.print.attribute.HashPrintRequestAttributeSet;
 import javax.print.attribute.PrintRequestAttributeSet;
-import javax.print.attribute.standard.Copies;
+import javax.print.attribute.standard.MediaPrintableArea;
+import javax.print.attribute.standard.PrinterResolution;
 
 import lombok.extern.slf4j.Slf4j;
 
@@ -21,18 +22,17 @@ import lombok.extern.slf4j.Slf4j;
 public class MontagePrinter {
     public void print(Path filename) throws PrintException, IOException {
         PrintRequestAttributeSet attributeSet = new HashPrintRequestAttributeSet();
-        attributeSet.add(new Copies(1));
-        PrintService[] printServices = PrintServiceLookup.lookupPrintServices(DocFlavor.INPUT_STREAM.JPEG, attributeSet);
+        attributeSet.add(new MediaPrintableArea(0, 0, 4, 6, MediaPrintableArea.INCH));
+        attributeSet.add(new PrinterResolution(300, 300, PrinterResolution.DPI));
+        PrintService printService = PrintServiceLookup.lookupDefaultPrintService();
 
-        if (printServices.length <= 0) {
+        if (printService == null) {
             throw new PrintException("No printer services available");
         }
 
-        PrintService printService = printServices[0];
         DocPrintJob job = printService.createPrintJob();
-
         try (InputStream is = new FileInputStream(filename.toFile())) {
-            Doc doc = new SimpleDoc(is, DocFlavor.INPUT_STREAM.JPEG, null);
+            Doc doc = new SimpleDoc(is, DocFlavor.INPUT_STREAM.PNG, null);
             job.print(doc, attributeSet);
         }
     }

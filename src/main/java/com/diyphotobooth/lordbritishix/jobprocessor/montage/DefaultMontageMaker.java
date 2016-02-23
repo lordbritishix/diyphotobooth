@@ -1,21 +1,21 @@
 package com.diyphotobooth.lordbritishix.jobprocessor.montage;
 
-import com.diyphotobooth.lordbritishix.model.Session;
-import com.diyphotobooth.lordbritishix.model.SessionUtils;
-import com.google.common.collect.Lists;
-import com.google.inject.Inject;
-import com.google.inject.name.Named;
-import lombok.extern.slf4j.Slf4j;
-import org.gm4java.engine.GMConnection;
-import org.gm4java.engine.GMService;
-import org.gm4java.engine.GMServiceException;
-
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.List;
 import java.util.stream.Collectors;
+import org.gm4java.engine.GMConnection;
+import org.gm4java.engine.GMService;
+import org.gm4java.engine.GMServiceException;
+import com.diyphotobooth.lordbritishix.model.Session;
+import com.diyphotobooth.lordbritishix.model.SessionUtils;
+import com.google.common.collect.Lists;
+import com.google.inject.Inject;
+import com.google.inject.name.Named;
+
+import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
 public class DefaultMontageMaker implements MontageMaker {
@@ -41,7 +41,7 @@ public class DefaultMontageMaker implements MontageMaker {
         Path patternPath = Paths.get(resourcesFolder.toString(), "pattern.jpg");
 
         Path imagePath = Paths.get(sessionDir.toString(), "tmp.grid.png");
-        Path montagePath = Paths.get(sessionDir.toString(), "montage.jpg");
+        Path montagePath = Paths.get(sessionDir.toString(), "montage.png");
 
         GMConnection connection = null;
         try {

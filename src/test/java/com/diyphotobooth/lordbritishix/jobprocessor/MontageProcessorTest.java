@@ -4,20 +4,18 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.time.LocalDateTime;
 import java.util.UUID;
-
-import com.diyphotobooth.lordbritishix.jobprocessor.montage.DefaultMontageMaker;
+import javax.print.PrintException;
 import org.apache.commons.io.FileUtils;
 import org.gm4java.engine.GMConnection;
 import org.gm4java.engine.GMServiceException;
-import org.gm4java.engine.support.SimpleGMService;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.Mock;
 import org.mockito.runners.MockitoJUnitRunner;
+import com.diyphotobooth.lordbritishix.jobprocessor.montage.DefaultMontageMaker;
 import com.diyphotobooth.lordbritishix.model.Session;
 import com.diyphotobooth.lordbritishix.model.SessionUtils;
 import com.google.common.collect.ImmutableMap;
@@ -125,21 +123,24 @@ public class MontageProcessorTest {
     }
 
     @Test
-    public void real() {
-        Session session = Session.builder()
-                .state(Session.State.DONE_TAKING_PHOTO)
-                .imageMap(
-                        ImmutableMap.of(1, "1.png",
-                                2, "2.png",
-                                3, "3.png",
-                                4, "4.png"))
-                .sessionId(UUID.fromString("71bf59fc-d430-11e5-ab30-625662870761"))
-                .numberOfPhotosToBeTaken(4)
-                .numberOfPhotosAlreadyTaken(4)
-                .sessionDate(LocalDateTime.now())
-                .build();
-
-        fixture = new MontageProcessor(new SessionUtils(), "/home/jim.quitevis/tmp", new DefaultMontageMaker(new SimpleGMService(), "/home/jim.quitevis/src/dashboard/settings", Paths.get("/home/jim.quitevis/tmp/").toString(), new SessionUtils()));
-        fixture.accept(session);
+    public void real() throws IOException, PrintException {
+//        Session session = Session.builder()
+//                .state(Session.State.DONE_TAKING_PHOTO)
+//                .imageMap(
+//                        ImmutableMap.of(1, "1.png",
+//                                2, "2.png",
+//                                3, "3.png",
+//                                4, "4.png"))
+//                .sessionId(UUID.fromString("71bf59fc-d430-11e5-ab30-625662870761"))
+//                .numberOfPhotosToBeTaken(4)
+//                .numberOfPhotosAlreadyTaken(4)
+//                .sessionDate(LocalDateTime.now())
+//                .build();
+//
+//        fixture = new MontageProcessor(new SessionUtils(), "/home/jim.quitevis/tmp", new DefaultMontageMaker(new SimpleGMService(), "/home/jim.quitevis/src/dashboard/settings", Paths.get("/home/jim.quitevis/tmp/").toString(), new SessionUtils()));
+//        fixture.accept(session);
+//
+//        MontagePrinter printer = new MontagePrinter();
+//        printer.print(Paths.get("/home/jim.quitevis/tmp/montage.png"));
     }
 }
