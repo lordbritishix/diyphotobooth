@@ -48,7 +48,7 @@ public class StatsCounter {
 
     public void dump() throws IOException {
         String now = LocalDateTime.now(ZoneOffset.UTC).toString();
-        Path file = Files.createFile(Paths.get(System.getProperty("user.dir"), "stats_" + now + ".txt"));
+        Path file = Files.createFile(Paths.get(System.getProperty("user.dir"), "stats_" + now.replace(":", "_") + ".txt"));
         try (BufferedWriter writer = new BufferedWriter(new OutputStreamWriter(new FileOutputStream(file.toString())))) {
             writer.write("Stats as of " + now);
             writer.newLine();
@@ -62,7 +62,7 @@ public class StatsCounter {
             writer.newLine();
             writer.write("Sessions To That Encountered Errors: " + sessionsThatEncounteredError.get());
             writer.newLine();
-            writer.write("Discarded Franes: " + discardedFrames.get());
+            writer.write("Discarded Frames: " + discardedFrames.get());
         }
     }
 }

@@ -24,6 +24,10 @@ public class Countdown extends Group {
         getChildren().add(countdownText);
     }
 
+    public void stop() {
+        timeline.stop();
+    }
+
     public void setCountdownFrom(int countdownFrom, int startDelay, Consumer<Void> countdownCompleteHandler) {
         timeline.getKeyFrames().clear();
         int finalVal = startDelay + countdownFrom;
@@ -45,7 +49,9 @@ public class Countdown extends Group {
 
             countdownFrom--;
         }
-        timeline.setOnFinished(p -> countdownCompleteHandler.accept(null));
+        timeline.setOnFinished(p -> {
+            countdownCompleteHandler.accept(null);
+        });
     }
 
     public void showText(String text) {

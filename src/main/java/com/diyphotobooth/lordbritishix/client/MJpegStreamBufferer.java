@@ -50,7 +50,7 @@ public class MJpegStreamBufferer {
                     }
                     else {
                         byte[] data = iterator.next();
-                        byte[] discarded = buffer.removeFirst();
+                        byte[] discarded = buffer.pop();
                         buffer.add(data);
                         listener.streamDiscarded(discarded);
                     }

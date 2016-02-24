@@ -41,7 +41,7 @@ public class DefaultMontageMaker implements MontageMaker {
         Path patternPath = Paths.get(resourcesFolder.toString(), "pattern.jpg");
 
         Path imagePath = Paths.get(sessionDir.toString(), "tmp.grid.png");
-        Path montagePath = Paths.get(sessionDir.toString(), "montage.png");
+        Path montagePath = Paths.get(sessionDir.toString(), "montage.jpg");
 
         GMConnection connection = null;
         try {
