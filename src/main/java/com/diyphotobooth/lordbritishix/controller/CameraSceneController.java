@@ -1,7 +1,11 @@
 package com.diyphotobooth.lordbritishix.controller;
 
 import com.diyphotobooth.lordbritishix.StatsCounter;
-import com.diyphotobooth.lordbritishix.client.*;
+import com.diyphotobooth.lordbritishix.client.IpCameraException;
+import com.diyphotobooth.lordbritishix.client.IpCameraHttpClient;
+import com.diyphotobooth.lordbritishix.client.MJpegStreamBufferListener;
+import com.diyphotobooth.lordbritishix.client.MJpegStreamBufferer;
+import com.diyphotobooth.lordbritishix.client.MJpegStreamIterator;
 import com.diyphotobooth.lordbritishix.jobprocessor.JobProcessor;
 import com.diyphotobooth.lordbritishix.model.Session;
 import com.diyphotobooth.lordbritishix.model.SessionUtils;
@@ -9,6 +13,7 @@ import com.diyphotobooth.lordbritishix.scene.CameraScene;
 import com.diyphotobooth.lordbritishix.scene.IdleScene;
 import com.diyphotobooth.lordbritishix.utils.StageManager;
 import com.google.common.annotations.VisibleForTesting;
+import com.google.common.util.concurrent.RateLimiter;
 import com.google.inject.Inject;
 import com.google.inject.name.Named;
 import javafx.application.Platform;
@@ -24,7 +29,11 @@ import java.io.InputStream;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.Optional;
-import java.util.concurrent.*;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.Consumer;
 import java.util.function.Function;
@@ -197,7 +206,7 @@ CameraSceneController extends BaseController implements MJpegStreamBufferListene
     }
 
     private void sessionStartToSessionEnd(boolean isFailure) throws ExecutionException, InterruptedException {
-        log.info("Transitioning from SessionStart -> SessionEnd");
+        log.info("Transitioning from SessionStart -> SessionEnd, with errors? {}", isFailure);
 
         if (viewFinderStopper.isPresent()) {
             viewFinderStopper.get().stopAndAwait(true);
@@ -211,15 +220,14 @@ CameraSceneController extends BaseController implements MJpegStreamBufferListene
             ((CameraScene) getScene()).clearCounterValue();
 
             if (isFailure) {
-                ((CameraScene) getScene()).showWrong();
                 ERROR.play();
+                ((CameraScene) getScene()).showWrong();
                 service.schedule(() -> Platform.runLater(() ->
                         getStageManager().showScene(IdleScene.class)), 5, TimeUnit.SECONDS);
-
             }
             else {
-                ((CameraScene) getScene()).showCheckmark();
                 SUCCESS.play();
+                ((CameraScene) getScene()).showCheckmark();
                 service.schedule(() -> Platform.runLater(() ->
                     getStageManager().showScene(IdleScene.class)), 5, TimeUnit.SECONDS);
             }
@@ -250,10 +258,6 @@ CameraSceneController extends BaseController implements MJpegStreamBufferListene
                     try(InputStream is = client.takePhoto(false)) {
                         imageName = sessionUtils.writeImageToCurrentSession(session, is, snapshotFolder);
                         statsCounter.incrementPicturesTaken();
-                        if (!session.isSessionFinished()) {
-                            Platform.runLater(() -> ((CameraScene) getScene()).setCounterValue(
-                                    session.getNumberOfPhotosAlreadyTaken(), photoCount));
-                        }
                     } catch (IpCameraException | IOException e) {
                         throw new RuntimeException(e);
                     }
@@ -299,44 +303,49 @@ CameraSceneController extends BaseController implements MJpegStreamBufferListene
                 throw new RuntimeException("Unable to start the session", e);
             }
 
+            AtomicBoolean isDone = new AtomicBoolean(true);
             while (!session.isSessionFinished() && !viewFinderStopper.get().isStopped()) {
-                CountDownLatch latch = new CountDownLatch(1);
-                AtomicBoolean hasErrors = new AtomicBoolean();
+                if (!isDone.get()) {
+                    sleepQuietly(500);
+                    continue;
+                }
+                else {
+                    isDone.set(false);
+                }
+
+                log.info("Doing session: {} for id {}", session.getNumberOfPhotosAlreadyTaken(), session.getSessionId());
+                Platform.runLater(() -> ((CameraScene) getScene()).setCounterValue(
+                                             session.getNumberOfPhotosAlreadyTaken() + 1, photoCount));
 
                 //Show countdown
-                Platform.runLater(() -> ((CameraScene) getScene()).setCountdownValueAndStart(
-                    delayPerStepInSeconds, startDelayInSeconds, q -> {
-                        try {
-                            log.info("Doing session: {} for id {}", session.getNumberOfPhotosAlreadyTaken(), session.getSessionId());
+                Platform.runLater(() -> ((CameraScene) getScene()).setCountdownValueAndStart(delayPerStepInSeconds, startDelayInSeconds,
+                        q -> CompletableFuture.runAsync(() -> {
                             sessionUtils.next(session, sessionStepAction.apply(session));
-                        }
-                        catch(Exception e) {
-                            hasErrors.set(true);
-                        } finally {
-                            latch.countDown();
-                        }
-                }));
-
-                try {
-                    //Wait for the countdown to complete
-                    latch.await();
-                } catch (InterruptedException e) {
-                    //swallow
-                }
-
-                //If an error has occured, break the loop and update the session to error
-                if (hasErrors.get()) {
-                    sessionUtils.updateSessionStateAndPersistQuietly(snapshotFolder, session, Session.State.ERROR);
-                    throw new RuntimeException("Session was forced to complete - Something wrong has occured");
-                }
+                            isDone.set(true);
+                        })));
             }
 
-            //If we have completed taking the session, set the state to done
-            session.setState(Session.State.DONE_TAKING_PHOTO);
-            sessionUtils.updateSessionStateAndPersistQuietly(snapshotFolder, session, Session.State.DONE_TAKING_PHOTO);
+            if (viewFinderStopper.get().isStopped()) {
+                //Viewfinder abruptly stopped, set state to error
+                sessionUtils.updateSessionStateAndPersistQuietly(snapshotFolder, session, Session.State.ERROR);
+                throw new RuntimeException("Viewfinder stopped");
+            }
+            else {
+                //If we have completed taking the session, set the state to done
+                sessionUtils.updateSessionStateAndPersistQuietly(snapshotFolder, session, Session.State.DONE_TAKING_PHOTO);
+                sleepQuietly(1000);
+            }
 
             return session;
         });
+    }
+
+    private void sleepQuietly(long ms) {
+        try {
+            Thread.sleep(ms);
+        } catch (InterruptedException e) {
+            //Swallow
+        }
     }
 
     /**
@@ -362,10 +371,12 @@ CameraSceneController extends BaseController implements MJpegStreamBufferListene
 
                 viewFinderStartedCallback.accept(null);
 
+                RateLimiter limiter = RateLimiter.create(15);
+
                 //Start stream consumer
                 while (!bufferer.isStopped() && !poisonPill.isStopped()) {
                     byte[] data = bufferer.get();
-                    if (data != null) {
+                    if ((data != null) && (limiter.tryAcquire())) {
                         dataReady.accept(data);
                     }
                 }
@@ -390,7 +401,6 @@ CameraSceneController extends BaseController implements MJpegStreamBufferListene
         public void stopAndAwait(boolean waitForCompletion) throws ExecutionException, InterruptedException {
             if (!isStopped()) {
                 stopped = true;
-
                 if (waitForCompletion) {
                     future.get();
                 }

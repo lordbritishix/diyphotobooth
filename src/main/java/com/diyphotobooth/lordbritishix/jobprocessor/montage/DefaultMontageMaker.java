@@ -51,6 +51,17 @@ public class DefaultMontageMaker implements MontageMaker {
                                             .map(p -> Paths.get(sessionDir.toString(), p).toString())
                                             .collect(Collectors.toList());
 
+            //Assumes image has been flipped
+            for (String image : imagesWithPath) {
+                List<String> cropCommand = Lists.newArrayList();
+                cropCommand.add("convert");
+                cropCommand.add(image);
+                cropCommand.add("-rotate");
+                cropCommand.add("180");
+                cropCommand.add(image);
+                connection.execute(cropCommand);
+            }
+
             //Center-crop images to 640x590
             for (String image : imagesWithPath) {
                 List<String> cropCommand = Lists.newArrayList();

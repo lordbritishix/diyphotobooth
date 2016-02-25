@@ -6,14 +6,11 @@ import com.google.inject.Inject;
 import javafx.application.Platform;
 import javafx.scene.Node;
 import javafx.scene.input.MouseEvent;
-import javafx.scene.media.AudioClip;
 
 /**
  * Controls the Idle Scene Controller
  */
 public class IdleSceneController extends BaseController {
-    private static final AudioClip START = new AudioClip(CameraSceneController.class.getResource("/sound/start.wav").toString());
-
     @Inject
     public IdleSceneController(StageManager stageManager) {
         super(stageManager);
@@ -21,7 +18,6 @@ public class IdleSceneController extends BaseController {
 
     @Override
     public void handle(Node node, MouseEvent e) {
-        START.play();
         Platform.runLater(() -> getStageManager().showScene(CameraScene.class));
     }
 

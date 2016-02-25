@@ -1,9 +1,7 @@
 package com.diyphotobooth.lordbritishix.jobprocessor.printer;
 
-import java.io.FileInputStream;
-import java.io.IOException;
-import java.io.InputStream;
-import java.nio.file.Path;
+import lombok.extern.slf4j.Slf4j;
+
 import javax.print.Doc;
 import javax.print.DocFlavor;
 import javax.print.DocPrintJob;
@@ -11,11 +9,13 @@ import javax.print.PrintException;
 import javax.print.PrintService;
 import javax.print.PrintServiceLookup;
 import javax.print.SimpleDoc;
-import javax.print.attribute.*;
+import javax.print.attribute.DocAttributeSet;
+import javax.print.attribute.HashDocAttributeSet;
 import javax.print.attribute.standard.MediaPrintableArea;
-import javax.print.attribute.standard.PrinterResolution;
-
-import lombok.extern.slf4j.Slf4j;
+import java.io.FileInputStream;
+import java.io.IOException;
+import java.io.InputStream;
+import java.nio.file.Path;
 
 @Slf4j
 public class MontagePrinter {

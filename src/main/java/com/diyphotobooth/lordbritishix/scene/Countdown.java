@@ -24,16 +24,13 @@ public class Countdown extends Group {
         getChildren().add(countdownText);
     }
 
-    public void stop() {
-        timeline.stop();
-    }
-
     public void setCountdownFrom(int countdownFrom, int startDelay, Consumer<Void> countdownCompleteHandler) {
         timeline.getKeyFrames().clear();
         int finalVal = startDelay + countdownFrom;
+        double y = 0;
         for (int x = startDelay; x < finalVal; ++x) {
             int value = countdownFrom;
-            timeline.getKeyFrames().add(new KeyFrame(Duration.seconds(x + 1), p -> {
+            timeline.getKeyFrames().add(new KeyFrame(Duration.seconds(x + 1 + y), p -> {
                 int val = value - 1;
                 countdownText.setText(val != 0 ? String.valueOf(value - 1) : "");
 
@@ -46,12 +43,10 @@ public class Countdown extends Group {
                     countdownText.setText("");
                 }
             }));
-
+            y += 0.5;
             countdownFrom--;
         }
-        timeline.setOnFinished(p -> {
-            countdownCompleteHandler.accept(null);
-        });
+        timeline.setOnFinished(p -> countdownCompleteHandler.accept(null));
     }
 
     public void showText(String text) {
