@@ -255,7 +255,7 @@ CameraSceneController extends BaseController implements MJpegStreamBufferListene
                 1,
                 (session) -> {
                     String imageName = "";
-                    try(InputStream is = client.takePhoto(false)) {
+                    try(InputStream is = client.takePhoto(true)) {
                         imageName = sessionUtils.writeImageToCurrentSession(session, is, snapshotFolder);
                         statsCounter.incrementPicturesTaken();
                     } catch (IpCameraException | IOException e) {

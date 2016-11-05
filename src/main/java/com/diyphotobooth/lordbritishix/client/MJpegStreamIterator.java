@@ -74,7 +74,7 @@ public class MJpegStreamIterator implements Iterator<byte[]> {
      */
     private MJpegStreamHeader readHeader() throws IOException {
         resetHeader();
-
+        readLine();
         header.boundary = readLine();
         header.contentType = getValue(readLine());
         header.contentLength = Integer.parseInt(getValue(readLine()));

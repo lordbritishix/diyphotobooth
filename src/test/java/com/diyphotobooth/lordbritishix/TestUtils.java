@@ -21,6 +21,7 @@ public class TestUtils {
     public static byte[] createPayload(String payload) {
         int payloadLength = payload.getBytes(StandardCharsets.UTF_8).length;
         StringBuffer header = new StringBuffer();
+        header.append("\r\n");
         header.append("boundary\r\n");
         header.append("Content-Type: image/jpeg\r\n");
         header.append("Content-Length: ");
