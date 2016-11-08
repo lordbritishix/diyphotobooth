@@ -1,38 +1,30 @@
 package com.diyphotobooth.lordbritishix.jobprocessor.montage;
 
-import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.List;
 import java.util.stream.Collectors;
-import org.gm4java.engine.GMConnection;
-import org.gm4java.engine.GMService;
-import org.gm4java.engine.GMServiceException;
 import com.diyphotobooth.lordbritishix.model.Session;
-import com.diyphotobooth.lordbritishix.model.SessionUtils;
 import com.google.common.collect.Lists;
 import com.google.inject.Inject;
 import com.google.inject.name.Named;
-
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.io.FileUtils;
+import org.gm4java.engine.GMConnection;
+import org.gm4java.engine.GMService;
+import org.gm4java.engine.GMServiceException;
 
 @Slf4j
-public class DefaultMontageMaker implements MontageMaker {
+public class GridMontageMaker implements MontageMaker {
     private final GMService service;
     private final Path resourcesFolder;
-    private final SessionUtils sessionUtils;
-    private final Path snapshotDir;
 
     @Inject
-    public DefaultMontageMaker(GMService service,
-                               @Named("resources.folder") String resourcesFolder,
-                               @Named("snapshot.folder") String snapshotDir,
-                               SessionUtils sessionUtils) {
+    public GridMontageMaker(GMService service,
+                            @Named("resources.folder") String resourcesFolder) {
         this.service = service;
         this.resourcesFolder = Paths.get(resourcesFolder);
-        this.sessionUtils = sessionUtils;
-        this.snapshotDir = Paths.get(snapshotDir);
     }
 
     @Override
@@ -62,7 +54,7 @@ public class DefaultMontageMaker implements MontageMaker {
                 connection.execute(cropCommand);
             }
 
-            //Center-crop images to 640x590
+            //Center-crop images
             for (String image : imagesWithPath) {
                 List<String> cropCommand = Lists.newArrayList();
                 cropCommand.add("convert");
@@ -108,11 +100,7 @@ public class DefaultMontageMaker implements MontageMaker {
 
             Files.list(sessionDir).forEach(p -> {
                 if (p.getFileName().toString().endsWith(".tmp") || (p.getFileName().toString().startsWith("tmp."))) {
-                    try {
-                        Files.delete(p);
-                    } catch (IOException e) {
-                        log.error("Unable to delete {}", p.toString());
-                    }
+                    FileUtils.deleteQuietly(p.toFile());
                 }
             });
 

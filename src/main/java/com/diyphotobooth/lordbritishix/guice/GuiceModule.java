@@ -1,20 +1,23 @@
 package com.diyphotobooth.lordbritishix.guice;
 
+import java.io.FileInputStream;
+import java.io.IOException;
+import java.io.InputStream;
+import java.nio.file.Path;
+import java.util.Properties;
+import com.diyphotobooth.lordbritishix.jobprocessor.montage.GridMontageMaker;
+import com.diyphotobooth.lordbritishix.jobprocessor.montage.MontageMaker;
+import com.diyphotobooth.lordbritishix.jobprocessor.montage.SinglePhotoMontageMaker;
 import com.diyphotobooth.lordbritishix.utils.StageManager;
 import com.google.inject.AbstractModule;
 import com.google.inject.Provides;
+import com.google.inject.name.Named;
 import com.google.inject.name.Names;
 import javafx.geometry.Rectangle2D;
 import javafx.stage.Screen;
 import javafx.stage.Stage;
 import org.gm4java.engine.GMService;
 import org.gm4java.engine.support.SimpleGMService;
-
-import java.io.FileInputStream;
-import java.io.IOException;
-import java.io.InputStream;
-import java.nio.file.Path;
-import java.util.Properties;
 
 /**
  * Sets up DI configuration
@@ -32,7 +35,7 @@ public class GuiceModule extends AbstractModule {
     protected void configure() {
         bind(StageManager.class);
 
-        Properties properties = null;
+        Properties properties;
         try {
             properties = loadFromFile(settingsFolder);
             bindConstant().annotatedWith(Names.named("ipcamera.hostName"))
@@ -64,7 +67,7 @@ public class GuiceModule extends AbstractModule {
         Properties properties = new Properties();
         try (InputStream is = new FileInputStream(path.toFile())) {
             properties.load(is);
-            return  properties;
+            return properties;
         }
     }
 
@@ -74,7 +77,22 @@ public class GuiceModule extends AbstractModule {
     }
 
     @Provides
-    GMService gmServiceProvider() {
+    public GMService gmServiceProvider() {
         return new SimpleGMService();
     }
+
+    @Provides @Named("singlemontage")
+    public MontageMaker singleMontageMaker(
+            GMService service,
+            @Named("resources.folder") String resourceFolder) throws IOException {
+        return new SinglePhotoMontageMaker(service, resourceFolder);
+    }
+
+    @Provides @Named("gridmontage")
+    public MontageMaker gridMontageMaker(
+            GMService service,
+            @Named("resources.folder") String resourceFolder) throws IOException {
+        return new GridMontageMaker(service, resourceFolder);
+    }
+
 }

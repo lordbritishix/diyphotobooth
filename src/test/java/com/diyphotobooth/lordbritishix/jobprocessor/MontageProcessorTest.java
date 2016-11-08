@@ -5,7 +5,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.UUID;
-import javax.print.PrintException;
+import com.diyphotobooth.lordbritishix.jobprocessor.montage.GridMontageMaker;
 import org.apache.commons.io.FileUtils;
 import org.gm4java.engine.GMConnection;
 import org.gm4java.engine.GMServiceException;
@@ -15,7 +15,6 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.Mock;
 import org.mockito.runners.MockitoJUnitRunner;
-import com.diyphotobooth.lordbritishix.jobprocessor.montage.DefaultMontageMaker;
 import com.diyphotobooth.lordbritishix.model.Session;
 import com.diyphotobooth.lordbritishix.model.SessionUtils;
 import com.google.common.collect.ImmutableMap;
@@ -31,7 +30,7 @@ public class MontageProcessorTest {
     private MontageProcessor fixture;
 
     @Mock
-    private DefaultMontageMaker montageMaker;
+    private GridMontageMaker montageMaker;
 
     @Mock
     private SessionUtils sessionUtils;
@@ -137,7 +136,7 @@ public class MontageProcessorTest {
 //                .sessionDate(LocalDateTime.now())
 //                .build();
 //
-//        fixture = new MontageProcessor(new SessionUtils(), "/home/jim.quitevis/tmp", new DefaultMontageMaker(new SimpleGMService(), "/home/jim.quitevis/src/dashboard/settings", Paths.get("/home/jim.quitevis/tmp/").toString(), new SessionUtils()));
+//        fixture = new MontageProcessor(new SessionUtils(), "/home/jim.quitevis/tmp", new GridMontageMaker(new SimpleGMService(), "/home/jim.quitevis/src/dashboard/settings", Paths.get("/home/jim.quitevis/tmp/").toString(), new SessionUtils()));
 //        fixture.accept(session);
 //
 //        MontagePrinter printer = new MontagePrinter();

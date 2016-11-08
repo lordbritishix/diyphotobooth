@@ -1,5 +1,19 @@
 package com.diyphotobooth.lordbritishix.controller;
 
+import java.io.ByteArrayInputStream;
+import java.io.IOException;
+import java.io.InputStream;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.util.Optional;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.function.Consumer;
+import java.util.function.Function;
 import com.diyphotobooth.lordbritishix.StatsCounter;
 import com.diyphotobooth.lordbritishix.client.IpCameraException;
 import com.diyphotobooth.lordbritishix.client.IpCameraHttpClient;
@@ -22,21 +36,6 @@ import javafx.scene.input.MouseEvent;
 import javafx.scene.media.AudioClip;
 import lombok.Data;
 import lombok.extern.slf4j.Slf4j;
-
-import java.io.ByteArrayInputStream;
-import java.io.IOException;
-import java.io.InputStream;
-import java.nio.file.Path;
-import java.nio.file.Paths;
-import java.util.Optional;
-import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.ExecutionException;
-import java.util.concurrent.Executors;
-import java.util.concurrent.ScheduledExecutorService;
-import java.util.concurrent.TimeUnit;
-import java.util.concurrent.atomic.AtomicBoolean;
-import java.util.function.Consumer;
-import java.util.function.Function;
 
 /**
  * Controls the Camera Scene
@@ -255,7 +254,7 @@ CameraSceneController extends BaseController implements MJpegStreamBufferListene
                 1,
                 (session) -> {
                     String imageName = "";
-                    try(InputStream is = client.takePhoto(true)) {
+                    try(InputStream is = client.takePhoto(false)) {
                         imageName = sessionUtils.writeImageToCurrentSession(session, is, snapshotFolder);
                         statsCounter.incrementPicturesTaken();
                     } catch (IpCameraException | IOException e) {
